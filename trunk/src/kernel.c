@@ -5,6 +5,11 @@
 #include "../include/keyboard.h"
 #include "../include/interrupts.h"
 
+
+#include "../include/multiboot.h"
+void __printMemoryMap(multiboot_info_t * mbd);
+
+
 DESCR_INT idt[0x81];			/* IDT de 81h entradas*/
 IDTR idtr;				/* IDTR */
 
@@ -72,7 +77,8 @@ kmain()
 Punto de entrada de C
 *************************************************/
 
-kmain() 
+/* 'multiboot_info_t' stores data about memory map */
+kmain(multiboot_info_t * mbd, unsigned int magic) 
 {
 	initializePics();
       	kbuffer.__KBUFFER_PTR_RD = 0;
@@ -82,8 +88,6 @@ kmain()
 
 	_turn_cursor_on();
 	sysinfo();
-	__printSystemSymbol();
-
 
 //Load exceptions
 	//Divide by cero
@@ -179,6 +183,66 @@ kmain()
 
 	_Sti();
 
+/* Print memory map info */
+	__printMemoryMap(mbd);
+/* ********************* */
+
+	__printSystemSymbol();
+
 	shell();
+}
+
+/*
+ * Temporal function to understand what is going on!
+ *
+ * The following map was printed by __printMemoryMap(), running on a bochs emulator with 32M RAM.
+ *
+ * --- MEMORY MAP ------------------------------------------------------------------------------|
+ * |	START	|	END	|	SIZE	|	DESCRIPTION				|
+ * --- BEGINNING OF LOWER MEMORY ---------------------------------------------------------------|
+ * |	0K	|	636K	|	636K	|	type 1					| ==>	Do NOT use first 1280 bytes although are type 1. Remember
+ * |	636K	|	640K	|	4K	|	Extended BDA, type 2			| IVT is stored in the first 1K of memory, among others.
+ * |	640K	|	928K	|	288K	|	Reserved memory area (unlisted, type 2)	| ==> Reserved memory area is for:
+ * |	928K	|	1024K	|	96K	|	Reserved memory area (type 2)		| 	- System BIOS ROM
+ * |		|		|		|						|	- Video RAM
+ * --- BEGINNING OF UPPER MEMORY ---------------------------------------------------------------|	- BIOS Extension ROMs on plug in cards
+ * |	1024K	|	32704K	|	31680K	|	type 1					|	- RAM on some I/O adapters
+ * |	32704K	|	32768K	|	64K	|	type 3					|
+ * ---------------------------------------------------------------------------------------------|
+ *
+ * Makes a total of 32 MiB, which is effectively what the bochsrc is showing in one of the first lines!! I'm the happiest man in the world!
+ *
+ * REGION TYPES:
+ * 	- Type O: Negative.
+ * 	- Type 1: Usable (normal) RAM.
+ * 	- Type 2: Reserved - unusable.
+ * 	- Type 3: ACPI reclaimable memory.
+ * 	- Type 4: ACPI NVS memory.
+ * 	- Type 5: Area containing bad memory.
+ *
+ * TIPS:
+ *	- Type 3 "ACPI reclaimable" memory regions may be used like (and combined with) normal "available RAM" areas as long as you're finished using the ACPI
+ *	tables that are stored there (i.e. it can be "reclaimed").
+ *	- Types 2, 4, 5 (reserved, ACPI non-volatile, bad) mark areas that should be avoided when you are allocating physical memory.
+ *	- Treat unlisted regions as Type 2 -- reserved. 
+ */
+
+void __printMemoryMap(multiboot_info_t * mbd){
+	memory_map_t * mmap = (memory_map_t *)mbd->mmap_addr;
+	int i = 0;
+
+	printf("Lower Memory amnount: %d KiB\n", mbd->mem_lower);
+	printf("Upper Memory amnount: %d KiB\n", mbd->mem_upper);
+	printf("Memory map buffer address: %d - length: %d\n", mbd->mmap_addr, mbd->mmap_length);
+	
+	while( (unsigned long)mmap < mbd->mmap_addr + mbd->mmap_length){ // Leaves loop when it exceeds mmap buffer size
+		printf("Memory Map: %d\n", i++);
+		printf("\tSize: %d\n", mmap->size);
+		printf("\tBase address: %d  %d\n", mmap->base_addr_high, mmap->base_addr_low);
+		printf("\tBase address length: %d  %d\n", mmap->length_high, mmap->length_low);
+		printf("\tType: %d\n", mmap->type);
+
+		mmap = (memory_map_t *)((unsigned long)mmap + mmap->size + sizeof(unsigned int));
+	}	
 }
 

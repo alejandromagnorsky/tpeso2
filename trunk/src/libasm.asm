@@ -95,11 +95,18 @@ _Sti:
 	sti			; habilita interrupciones por flag
 	ret
 
-_mascaraPIC1:			; Escribe mascara del PIC 1
+_enable_paging:			; Habilita paginación
 	push    ebp
         mov     ebp, esp
         mov     ax, [ss:ebp+8]  ; ax = mascara de 16 bits
         out	21h,al
+        pop     ebp
+        retn
+
+_mascaraPIC1:			; Escribe mascara del PIC 1
+	push    ebp
+        mov     ebp, esp
+        
         pop     ebp
         retn
 

@@ -23,4 +23,5 @@ gcc -g -c ../src/programs/clear.c -o clear.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/bingo.c -o bingo.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/reboot.c -o reboot.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/history.c -o history.o -fno-builtin -fno-stack-protector
-ld -T ../src/link.ld -o kernel.bin kernel.o kstart.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o history.o
+gcc -g -c ../src/mmu.c -o mmu.o -fno-builtin -fno-stack-protector
+ld -T ../src/link.ld -o kernel.bin kernel.o kstart.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o history.o mmu.o
