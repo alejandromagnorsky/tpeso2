@@ -184,7 +184,7 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	_Sti();
 
 /* Print memory map info */
-	__printMemoryMap(mbd);
+//	__printMemoryMap(mbd);
 /* ********************* */
 
 	__printSystemSymbol();
