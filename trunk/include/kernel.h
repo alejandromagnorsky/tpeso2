@@ -35,7 +35,7 @@ typedef enum eUSER {U_KERNEL=0, U_NORMAL} tUSERS;
 *
 * Recibe como parametros:
 * - File Descriptor
-* - Buffer del source
+* - Buffer a donde escribir
 * - Cantidad
 *
 **/
@@ -45,10 +45,13 @@ size_t __write(int fd, const void* buffer, size_t count);
 *
 * Recibe como parametros:
 * - File Descriptor
-* - Buffer a donde escribir
+* - Buffer del source
 * - Cantidad
 *
 **/
 size_t __read(int fd, void* buffer, size_t count);
+
+
+void setupIDT();
 
 #endif

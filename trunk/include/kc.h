@@ -9,6 +9,8 @@
 
 #define NULL 0
 
+typedef enum { false, true } bool;
+
 int abs(int x);
 
 /* Muestra la imagen de inicio */
