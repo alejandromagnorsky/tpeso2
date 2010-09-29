@@ -66,7 +66,7 @@ void scheduler(void);
 void context_switch(void); // Interrupt type
 
 void block(Task * task, TaskState state);
-void ready(Task * task, bool success);
+void __ready(Task * task, bool success);
 void free_task(Task * task);
 
 int msecs_to_ticks(int msecs);

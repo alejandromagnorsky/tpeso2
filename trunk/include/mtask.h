@@ -3,7 +3,7 @@
 
 #include "../include/defs.h"
 
-typedef enum {TaskSuspended, TaskReady, TaskCurrent, TaskDelaying, TaskWaiting, TaskSending, TaskReceiving, TaskTerminated} TaskState;
+typedef enum {SUSPENDED, READY, CURRENT, DELAYING, WAITING, SENDING, RECEIVING, TERMINATED} TaskState;
 typedef struct Task Task;
 
 typedef struct{
@@ -44,27 +44,27 @@ struct Task{
 // Puntero a la funcion a ejecutar al iniciar el proceso
 typedef void (*TaskFunc)(void * arg);
 
-Task *		CreateTask(TaskFunc func, unsigned stacksize, void * arg, char * name, int priority);
-Task *		CurrentTask(void);
-void		DeleteTask(Task * task);
+Task *		createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, int priority);
+Task *		currentTask(void);
+void		deleteTask(Task * task);
 
-int			GetPriority(Task * task);
-void		SetPriority(Task * task, int priority);
-void		Suspend(Task * task);
-void		Ready(Task * task);
+int			getPriority(Task * task);
+void		setPriority(Task * task, int priority);
+void		suspend(Task * task);
+void		ready(Task * task);
 
-TaskQueue *	CreateQueue(char *name);
-void		DeleteQueue(TaskQueue * queue);
-bool		WaitQueue(TaskQueue *queue);
-bool		WaitQueueTimed(TaskQueue * queue, int msecs);
-bool		SignalQueue(TaskQueue * queue);
-void		FlushQueue(TaskQueue * queue, bool success);
+TaskQueue *	createQueue(char *name);
+void		deleteQueue(TaskQueue * queue);
+bool		waitQueue(TaskQueue *queue);
+bool		waitQueueTimed(TaskQueue * queue, int msecs);
+bool		signalQueue(TaskQueue * queue);
+void		flushQueue(TaskQueue * queue, bool success);
 
-bool		Send(Task * to, char * msg, int size);
-bool		Receive(Task ** from, char * msg, int * size);
+bool		send(Task * to, char * msg, int size);
+bool		receive(Task ** from, char * msg, int * size);
 
-void		Pause(void);
-void		Yield(void);
-void		Delay(int msecs);
-void		Exit(void);
+void		pause(void);
+void		yield(void);
+void		delay(int msecs);
+void		exit(void);
 #endif
