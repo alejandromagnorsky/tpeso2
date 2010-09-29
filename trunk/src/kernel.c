@@ -1,7 +1,5 @@
 #include "../include/kasm.h"
-#include "../include/defs.h"
 #include "../include/kernel.h"
-#include "../include/kc.h"
 #include "../include/keyboard.h"
 #include "../include/interrupts.h"
 
@@ -10,41 +8,9 @@
 void __printMemoryMap(multiboot_info_t * mbd);
 
 
-DESCR_INT idt[0x81];			/* IDT de 81h entradas*/
+DESCR_INT idt[0x81];	/* IDT de 81h entradas*/
 IDTR idtr;				/* IDTR */
 
-
-/* 
-** Initialize the PICs and remap them
-*/
-void initializePics()
-{
-	/* Send ICW1 to both PICS 
-	** ICW1 is used to tell the PICs if a ICW4 is following 
-	** and if the PIC is working in a cascaded PIC environment
-	*/
-
-	_outport(0x20, 0x11);
-	_outport(0xA0, 0x11);
-	/* Send ICW2 to both PICS 
-	** ICW2 tells the PICs where to map IRQ0 and IRQ8.
-	*/
-	_outport(0x21, 0x20);
-	_outport(0xA1, 0x28);
-	/* Send ICW3 to both PICS 
-	** ICW3 is used for telling the PICs which IRQ to use for
-	** the communication between each other
-	*/
-	_outport(0x21, 2);      // Set the master PIC's IRQ2 to be connected whit the slave PIC
-	_outport(0xA1, 0);	// For the slave PIC, it means that it is the Slave0
-	/* Send ICW4 to both PICS 
-	** ICW4 is used for telling that we are working in a 80x86 architecture 
-	** and if the interruption is handled automatically or if it needs help from software.
-	*/
-	_outport(0x21, 1);
-	_outport(0xA1, 1);
-
-}
 
 int getSeconds(){
 	_outport(0x70, 0);
@@ -164,6 +130,39 @@ void __printMemoryMap(multiboot_info_t * mbd){
 }
 
 
+/* 
+** Initialize the PICs and remap them
+*/
+void initializePics()
+{
+	/* Send ICW1 to both PICS 
+	** ICW1 is used to tell the PICs if a ICW4 is following 
+	** and if the PIC is working in a cascaded PIC environment
+	*/
+
+	_outport(0x20, 0x11);
+	_outport(0xA0, 0x11);
+	/* Send ICW2 to both PICS 
+	** ICW2 tells the PICs where to map IRQ0 and IRQ8.
+	*/
+	_outport(0x21, 0x20);
+	_outport(0xA1, 0x28);
+	/* Send ICW3 to both PICS 
+	** ICW3 is used for telling the PICs which IRQ to use for
+	** the communication between each other
+	*/
+	_outport(0x21, 2);      // Set the master PIC's IRQ2 to be connected whit the slave PIC
+	_outport(0xA1, 0);	// For the slave PIC, it means that it is the Slave0
+	/* Send ICW4 to both PICS 
+	** ICW4 is used for telling that we are working in a 80x86 architecture 
+	** and if the interruption is handled automatically or if it needs help from software.
+	*/
+	_outport(0x21, 1);
+	_outport(0xA1, 1);
+
+}
+
+
 void setupIDT(){
 //Load exceptions
 	//Divide by cero
@@ -248,6 +247,42 @@ void setupIDT(){
 	idtr.base +=(dword) &idt;
 	idtr.limit = sizeof(idt)-1;
 	
-	_lidt (&idtr);	
+	_lidt (&idtr);
 }
+
+
+
+/*
+--------------------------------------------------------------------------------
+block - bloquea un proceso
+--------------------------------------------------------------------------------
+*/
+
+void
+block(Task * task, TaskState state)
+{
+	mt_dequeue(task);
+	mt_dequeue_time(task);
+	task->state = state;
+}
+
+
+/*
+--------------------------------------------------------------------------------
+msecs_to_ticks, ticks_to_msecs - conversion de milisegundos a ticks y viceversa
+--------------------------------------------------------------------------------
+*/
+
+int
+msecs_to_ticks(int msecs)
+{
+	return (msecs + MSPERTICK - 1) / MSPERTICK;
+}
+
+int
+ticks_to_msecs(int ticks)
+{
+	return ticks * MSPERTICK;
+}
+
 
