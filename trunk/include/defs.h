@@ -54,7 +54,8 @@ typedef struct {
   dword base;
 } IDTR;
 
-     
+    
+typedef enum { false, true } bool;
 
 #endif
 

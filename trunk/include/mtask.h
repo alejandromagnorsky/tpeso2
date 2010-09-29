@@ -1,13 +1,19 @@
-typedef enum {Suspended, Ready, Current, Delaying, Waiting, Sending, Receiving, Terminated} TaskState;
+#ifndef _mtask_
+#define _mtask_
+
+#include "../include/defs.h"
+
+typedef enum {TaskSuspended, TaskReady, TaskCurrent, TaskDelaying, TaskWaiting, TaskSending, TaskReceiving, TaskTerminated} TaskState;
+typedef struct Task Task;
 
 typedef struct{
-	char *			name;
-	Task_t *		head;
-	Task_t *		tail;
+	char *	name;
+	Task *	head;
+	Task *	tail;
 
 } TaskQueue;
 
-typedef struct {
+struct Task{
 	char * 	name;
 	int		pid;
 	int 	priority;
@@ -28,37 +34,37 @@ typedef struct {
 	
 	// Para los IPCs
 	bool	success;		// Indica si el mensaje fue recibido o enviado
-	Task	from;			// Indica el emisor del ultimo mensaje recibido
+	Task *	from;			// Indica el emisor del ultimo mensaje recibido
 	char *	msg;			// Mensaje a mandar o recibido
 	int		msg_size; 		// Tamaño del mensaje
 	TaskQueue	sendQueue;	// La cola donde los demas procesos esperan para dejarle un mensaje a este
-} Task;
-
+};
 
 
 // Puntero a la funcion a ejecutar al iniciar el proceso
 typedef void (*TaskFunc)(void * arg);
 
-Task *		createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, int priority);
-Task *		currentTask(void);
-void		deleteTask(Task * task);
+Task *		CreateTask(TaskFunc func, unsigned stacksize, void * arg, char * name, int priority);
+Task *		CurrentTask(void);
+void		DeleteTask(Task * task);
 
-int			getPriority(Task * task);
-void		setPriority(Task * task, int priority);
-void		suspend(Task * task);
-void		ready(Task * task);
+int			GetPriority(Task * task);
+void		SetPriority(Task * task, int priority);
+void		Suspend(Task * task);
+void		Ready(Task * task);
 
-TaskQueue *	createQueue(char *name);
-void		deleteQueue(TaskQueue * queue);
-bool		waitQueue(TaskQueue_t *queue);
-bool		waitQueueTimed(TaskQueue * queue, int msecs);
-bool		signalQueue(TaskQueue * queue);
-void		flushQueue(TaskQueue * queue, bool success);
+TaskQueue *	CreateQueue(char *name);
+void		DeleteQueue(TaskQueue * queue);
+bool		WaitQueue(TaskQueue *queue);
+bool		WaitQueueTimed(TaskQueue * queue, int msecs);
+bool		SignalQueue(TaskQueue * queue);
+void		FlushQueue(TaskQueue * queue, bool success);
 
-bool		send(Task * to, char * msg, int size);
-bool		receive(Task ** from, char * msg, int * size);
+bool		Send(Task * to, char * msg, int size);
+bool		Receive(Task ** from, char * msg, int * size);
 
-void		pause(void);
-void		yield(void);
-void		delay(int msecs);
-void		exit(void);
+void		Pause(void);
+void		Yield(void);
+void		Delay(int msecs);
+void		Exit(void);
+#endif

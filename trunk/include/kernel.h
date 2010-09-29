@@ -1,4 +1,7 @@
+#ifndef _kernel_
+#define _kernel_
 #include "../include/defs.h"
+#include "../include/mtask.h"
 
 /********************************** 
 *
@@ -6,8 +9,7 @@
 *
 ***********************************/
 
-#ifndef _kernel_
-#define _kernel_
+
 
 #define OS_PID	0
 #define stdout 1
@@ -53,5 +55,24 @@ size_t __read(int fd, void* buffer, size_t count);
 
 
 void setupIDT();
+
+Task * last_task;				/* proceso anterior */
+Task main_task;				/* proceso principal */
+int ticks_to_run;				/* ranura de tiempo */
+TaskQueue ready_q;				/* cola de procesos ready */
+TaskQueue terminated_q;		/* cola de procesos terminados */
+
+void scheduler(void);
+void context_switch(void); // Interrupt type
+
+void block(Task * task, TaskState state);
+void ready(Task * task, bool success);
+void free_task(Task * task);
+
+int msecs_to_ticks(int msecs);
+int ticks_to_msecs(int ticks);
+
+void free_terminated(void);		/* libera tareas terminadas */
+void do_nothing(void * arg);		/* funcion del proceso nulo */
 
 #endif
