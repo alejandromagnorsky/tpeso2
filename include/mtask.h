@@ -3,6 +3,7 @@
 
 #include "../include/defs.h"
 
+
 typedef enum {SUSPENDED, READY, CURRENT, DELAYING, WAITING, SENDING, RECEIVING, TERMINATED} TaskState;
 typedef struct Task Task;
 
@@ -17,17 +18,18 @@ struct Task{
 	char * 	name;
 	int		pid;
 	int 	priority;
-	
+	TaskState state;	
+
 	char * 	stack;
 	int		esp;
 	
 	// Para la cola en la que esta el proceso
-	TaskQueue *	taskqueue; 	// Cola de procesos en la que se encuentra el proceso
-	Task *	task_prev;		// El task anterior a este en la cola de procesos especifica
-	Task *	task_next;		// El task siguiente a este en la cola de procesos especifica
+	TaskQueue *	queue; 	// Cola de procesos en la que se encuentra el proceso
+	Task *	prev;		// El task anterior a este en la cola de procesos especifica
+	Task *	next;		// El task siguiente a este en la cola de procesos especifica
 	
 	// Para cuando usa sleep
-	int		ticksToWait;	// Ticks restantes para ser despertado
+	int		ticks;	// Ticks restantes para ser despertado
 	bool	in_time_q;		// Si es verdadero, el proceso esta en la cola del tiempo
 	Task *	time_prev;		// El task anterior a este en la cola del tiempo
 	Task *	time_next;		// El task siguiente a este en la cola del tiempo

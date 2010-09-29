@@ -1,13 +1,10 @@
 /**********************
  kc.h
 **********************/
-#include "defs.h"
-#include "kernel.h"
-
 #ifndef _kc_
 #define _kc_
-
-#define NULL 0
+#include "defs.h"
+#include "kernel.h"
 
 int abs(int x);
 

@@ -16,6 +16,12 @@
 #define stdin 0
 #define KBUFFER_SIZE 128
 
+#define NULL_STACK		256 			/* tamano de stack para proceso nulo */ 
+#define INIFL			0x200
+#define QUANTUM			2
+#define MSPERTICK 		55
+
+
 typedef struct{
 	int buf[KBUFFER_SIZE];
 	int __KBUFFER_PTR_RD;
@@ -55,6 +61,7 @@ size_t __read(int fd, void* buffer, size_t count);
 
 
 void setupIDT();
+void initializePics();
 
 Task * last_task;				/* proceso anterior */
 Task main_task;				/* proceso principal */
