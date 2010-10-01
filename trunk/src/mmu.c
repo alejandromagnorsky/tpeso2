@@ -1,87 +1,66 @@
 #include "../include/mmu.h"
+#include "../include/defs.h"
 
 
 /* ****************************************************************************************************** */
 /* ****************************************************************************************************** */
 /* TOdO ESTO PASARLO DESPUÉS A MMU.H */
 
-/* Ver bien qué onda esta sttuct Page_descriptor. Así como está es solo de prueba. */
-// CONSTANTES HIPER TEMPORALES; después ver bien como tratar esto.
-#define NULL 0	// !!!!!!!
-#define UPPER_START 1048576	// Comienzo de la upper memory (1 MiB) en bytes.
-#define UPPER_SIZE 31680	// CONSTANTE RE-TEMPORAL con el tamaño de la upper memory EN KiB.
-#define PAGE_SIZE 4096		//Tamaño de las páginas en bytes, 4 KiB. no creo que las hagamos variables.
-#define PAGE_QUANT (int)(UPPER_SIZE/PAGE_SIZE)
+#define MEMORY_BASE 0						// Memory start.		
+#define MEMORY_LIMIT (32*1024*1024)			// Total memory size (32M).
+#define PAGE_SIZE 4096						// Page size (4K).
+#define PAGE_QTY (MEMORY_LIMIT / PAGE_SIZE)	// Size of memory in pages.
 
 typedef enum { NOT_PRESENT, PRESENT } Presence;
 
-typedef struct {
-	unsigned int base_addr;
-	Presence p;
-} Page_descriptor;
+char page_map [PAGE_QTY/8] = { 0 };	// Page frames information.
+unsigned short byte_ptr = 0;		// Pointer to the first available set of pages with at
+									// least one available page in memory (A BYTE in BITMAP).
+char bit_ptr = 0;					// Index of the first empty bit in a byte (A BIT IN A 'byte_ptr').
 
-Page_descriptor pages [PAGE_QUANT];
-
-void __paging();
-void * malloc(unsigned int size);
-int free();
+int binaryPow(int exp);
+void * allocator();
+void deallocator(void * ptr);
 
 /* Fin includes temporal. */
 /* ****************************************************************************************************** */
 /* ****************************************************************************************************** */
 
-/* __PAGING:
-	- enables paging unit.
-	- makes CR3 point to the page directory.
-	- fills page directory with page tables and page tables with PRESENT pages.
+/* 'binaryPow':
+  		Returns 2 to the power of 'exp'.
 */
-void __paging(){
-	unsigned int i, cr0, base = UPPER_START;
-
-	/* Enables paging by setting 31th bit of CR0 in 1. */
-	asm volatile("mov %%cr0, %0": "=b"(cr0));
-	cr0 |= 0x80000000;				// bitwise-OR CR0 with 1000 0000 ... 0000 -> Enables paging bit.
-	asm volatile("mov %0, %%cr0":: "b"(cr0));	// Load CR0 register with the new value.
-
-	/* CR3 now points to the begginning of upper memory. */
-	asm volatile("mov %0, %%cr3":: "b"(base));
-
-	// THIS (!!??)
-	for (i=0; i<PAGE_QUANT; i++, base+=PAGE_SIZE){
-		pages[i].base_addr = base;
-		pages[i].p = PRESENT;
-	}
+int binaryPow(int exp){
+	int ans = 2;
+	if (exp == 0) return 1;
+	while(exp-- > 1) ans *= ans;
+	return ans;
 }
 
-/* MALLOC:
-  	returns a pointer to the first free memory chunk of size n*PAGE_SIZE, being n the minimun integer
-	satisfying n*PAGE_SIZE >= size. NULL in case there is not such available contiguous space.
+/* 'allocator':
+  		Returns a pointer to a free page.
+  		NULL in case there is no free page in memory.
 */
-void * malloc(unsigned int size){
-	int i, n = 0;
-	for(i=0; i<PAGE_QUANT; i++){
-		if (pages[i].p == PRESENT){
-			n++;
-			if (n*PAGE_SIZE >= size){
-				pages[i-n+1].p = NOT_PRESENT;
-				return (void *)pages[i-n+1].base_addr;
-			}
-		}
-	}
-	return NULL;
+void * allocator(){
+	int page_number = (byte_ptr * 8) + bit_ptr;
+	int not_present = binaryPow(bit_ptr);
+	
+	if (page_number == PAGE_QTY) return NULL;	// !!!!! MEMORY IS FULL !!!!!
+	else page_map[byte_ptr] |= not_present;		// Updates page_map
+	
+	/* Updates pointer */
+	if (++bit_ptr == 8){ bit_ptr = 0; byte_ptr++; }
+	
+	return (void *)(page_number * PAGE_SIZE);
 }
 
-/* FREE:
-  	given a pointer ptr, it sets its corresponding page presence bit in PRESENT.
-*/
-int free(void * ptr){
-	int pg = (unsigned int) ptr / PAGE_SIZE;
-	if (pg < 0 || pg >= PAGE_QUANT){
-		return -1;
-	} else {
-		pages[pg].p = PRESENT;
-		return 0;
-	}
+/* 'deallocator':
+  		Given a pointer 'ptr', frees its associated page in memory.
+*/ 
+void deallocator(void * ptr){
+	unsigned short page_byte = ((unsigned int) ptr) / (PAGE_SIZE*8);
+	char page_bit = (((unsigned int) ptr) / PAGE_SIZE) % 8;
+	char present = ~binaryPow(page_bit);
+	page_map[page_byte] &= present;
 }
 
 
