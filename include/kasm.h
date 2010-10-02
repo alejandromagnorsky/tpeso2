@@ -18,6 +18,11 @@ void		_mascaraPIC2 (byte mascara);  /* Escribe mascara de PIC2 */
 void		_Cli(void);        /* Deshabilita interrupciones  */
 void		_Sti(void);	 /* Habilita interrupciones  */
 
+unsigned int	_read_cr0();
+unsigned int	_read_cr3();
+void		_write_cr0(unsigned int value);
+void		_write_cr3(unsigned int dir);
+
 void		_int_00_hand();
 void		_int_01_hand();
 void		_int_02_hand();
