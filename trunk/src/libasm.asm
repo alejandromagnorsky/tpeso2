@@ -1,4 +1,8 @@
 GLOBAL  _read_msw,_lidt
+GLOBAL	_read_cr0
+GLOBAL	_read_cr3
+GLOBAL	_write_cr0
+GLOBAL	_write_cr3
 GLOBAL	_read_scancode
 GLOBAL  _turn_cursor_on
 GLOBAL  _turn_cursor_off
@@ -95,13 +99,7 @@ _Sti:
 	sti			; habilita interrupciones por flag
 	ret
 
-_enable_paging:			; Habilita paginación
-	push    ebp
-        mov     ebp, esp
-        mov     ax, [ss:ebp+8]  ; ax = mascara de 16 bits
-        out	21h,al
-        pop     ebp
-        retn
+
 
 _mascaraPIC1:			; Escribe mascara del PIC 1
 	push    ebp
@@ -122,6 +120,29 @@ _read_msw:
         smsw    ax		; Obtiene la Machine Status Word
         retn
 
+_read_cr0:
+		mov eax, cr0
+		retn
+
+_write_cr0:
+		push ebp
+		mov ebp, esp
+		mov eax, [ebp+8]
+		mov cr0,  eax
+		pop ebp
+		retn
+
+_read_cr3:
+		mov eax, cr3
+		retn
+
+_write_cr3:
+		push ebp
+		mov ebp, esp
+		mov eax, [ebp+8]
+		mov cr3, eax
+		pop ebp
+		retn
 
 _lidt:				; Carga el IDTR
         push    ebp

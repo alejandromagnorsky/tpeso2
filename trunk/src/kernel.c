@@ -3,10 +3,12 @@
 #include "../include/keyboard.h"
 #include "../include/interrupts.h"
 
-
 #include "../include/multiboot.h"
 void __printMemoryMap(multiboot_info_t * mbd);
 
+// INCLUDE TEMPORAL
+// extern char page_map[];
+////////////////////////
 
 DESCR_INT idt[0x81];	/* IDT de 81h entradas*/
 IDTR idtr;				/* IDTR */
@@ -70,6 +72,23 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 //	__printMemoryMap(mbd);
 /* ********************* */
 
+
+/*	TEST ALLOCATOR Y DEALLOCATOR. Works fine.	
+	printf("New page: %d\n", allocator());
+	printf("New page: %d\n", allocator());
+	printf("New page: %d\n", allocator());
+	printf("New page: %d\n", allocator());
+	printf("New page: %d\n", allocator());
+	printf("New page: %d\n", allocator());
+	//printf("New page: %d\n", allocator());
+	//printf("New page: %d\n", allocator());
+	deallocator(4194304);
+	deallocator(4194304+4096+5);
+	//deallocator(4194304+4096+4096+4096);
+	int i; for(i=0; i<4; i++) printf("char %d: %d\n", i, page_map[i]);
+*/
+	paging();
+	printf("\n");
 	__printSystemSymbol();
 
 	shell();
@@ -81,19 +100,19 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
  * The following map was printed by __printMemoryMap(), running on a bochs emulator with 32M RAM.
  *
  * --- MEMORY MAP ------------------------------------------------------------------------------|
- * |	START	|	END	|	SIZE	|	DESCRIPTION				|
+ * |	START	|	END		|	SIZE	|	DESCRIPTION											|
  * --- BEGINNING OF LOWER MEMORY ---------------------------------------------------------------|
- * |	0K	|	636K	|	636K	|	type 1					| ==>	Do NOT use first 1280 bytes although are type 1. Remember
- * |	636K	|	640K	|	4K	|	Extended BDA, type 2			| IVT is stored in the first 1K of memory, among others.
- * |	640K	|	928K	|	288K	|	Reserved memory area (unlisted, type 2)	| ==> Reserved memory area is for:
- * |	928K	|	1024K	|	96K	|	Reserved memory area (type 2)		| 	- System BIOS ROM
- * |		|		|		|						|	- Video RAM
+ * |	0K		|	636K	|	636K	|	type 1												| ==>	Do NOT use first 1280 bytes although are type 1. Remember
+ * |	636K	|	640K	|	4K		|	Extended BDA, type 2								| IVT is stored in the first 1K of memory, among others.
+ * |	640K	|	928K	|	288K	|	Reserved memory area (unlisted, type 2)				| ==> Reserved memory area is for:
+ * |	928K	|	1024K	|	96K		|	Reserved memory area (type 2)						| 	- System BIOS ROM
+ * |			|			|			|														|	- Video RAM
  * --- BEGINNING OF UPPER MEMORY ---------------------------------------------------------------|	- BIOS Extension ROMs on plug in cards
- * |	1024K	|	32704K	|	31680K	|	type 1					|	- RAM on some I/O adapters
- * |	32704K	|	32768K	|	64K	|	type 3					|
+ * |	1024K	|	32704K	|	31680K	|	type 1												|	- RAM on some I/O adapters
+ * |	32704K	|	32768K	|	64K		|	type 3												|
  * ---------------------------------------------------------------------------------------------|
  *
- * Makes a total of 32 MiB, which is effectively what the bochsrc is showing in one of the first lines!! I'm the happiest man in the world!
+ * Makes a total of 32 MiB, which is effectively what the bochsrc is showing in one of the first lines!!
  *
  * REGION TYPES:
  * 	- Type O: Negative.
