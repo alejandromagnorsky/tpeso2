@@ -22,7 +22,7 @@ int binaryPow(int exp){
 */
 void * allocator(){
 	int page_number = (byte_ptr * 8) + bit_ptr;
-	if (page_number == PAGE_QTY) return NULL;	// !!!!! MEMORY IS FULL !!!!!
+	if (page_number == PAGE_QTY){ printf("FULL\n"); return NULL; }	// !!!!! MEMORY IS FULL !!!!!
 
 	page_map[byte_ptr] |= binaryPow(bit_ptr);		// Updates page_map
 
@@ -31,15 +31,4 @@ void * allocator(){
 	
 	return (void *)(page_number * PAGE_SIZE);
 }
-
-/* 'deallocator':
-  		Given a pointer 'ptr', frees its associated page in memory.
-*/ 
-void deallocator(void * ptr){
-	unsigned short page_byte = (unsigned int) ptr / (PAGE_SIZE*8);
-	char page_bit = (((unsigned int) ptr) / PAGE_SIZE) % 8;
-	char present = ~binaryPow(page_bit);
-	page_map[page_byte] &= present;
-}
-
 
