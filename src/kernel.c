@@ -68,26 +68,13 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	
 	_Sti();
 	
-/* Print memory map info */
-//	__printMemoryMap(mbd);
-/* ********************* */
-
-
-/*	TEST ALLOCATOR Y DEALLOCATOR. Works fine.	
-	printf("New page: %d\n", allocator());
-	printf("New page: %d\n", allocator());
-	printf("New page: %d\n", allocator());
-	printf("New page: %d\n", allocator());
-	printf("New page: %d\n", allocator());
-	printf("New page: %d\n", allocator());
-	//printf("New page: %d\n", allocator());
-	//printf("New page: %d\n", allocator());
-	deallocator(4194304);
-	deallocator(4194304+4096+5);
-	//deallocator(4194304+4096+4096+4096);
-	int i; for(i=0; i<4; i++) printf("char %d: %d\n", i, page_map[i]);
-*/
+	// A TENER EN CUENTA: SI BARDEO UNA DIRECCION QUE NO EXISTE (COMO LA 0x5000000) IMPRIME -1. NO TIRA ERROR NI NADA.
+	//unsigned int * ptr = (unsigned int *)0x500000;
+	//*ptr = 5;
+	//printf("%d\n", *ptr);
 	paging();
+	//printf("%d\n", *ptr);
+	
 	printf("\n");
 	__printSystemSymbol();
 

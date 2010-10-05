@@ -9,4 +9,3 @@
 
 int binaryPow(int exp);
 void * allocator();
-void deallocator(void * ptr);
