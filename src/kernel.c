@@ -5,13 +5,16 @@
 
 #include "../include/multiboot.h"
 void __printMemoryMap(multiboot_info_t * mbd);
+void func(int a);
 
 // INCLUDE TEMPORAL
 // extern char page_map[];
 ////////////////////////
 
+
 DESCR_INT idt[0x81];	/* IDT de 81h entradas*/
 IDTR idtr;				/* IDTR */
+
 
 
 int getSeconds(){
@@ -48,7 +51,7 @@ Punto de entrada de C
 /* 'multiboot_info_t' stores data about memory map */
 kmain(multiboot_info_t * mbd, unsigned int magic) 
 {
-	_Cli();
+	DisableInts();
 
 	initializePics();
     
@@ -61,24 +64,40 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	sysinfo();
 	
 	setupIDT();
-	
+
 	// Habilito interrupcion del timer tick y del teclado
 	_mascaraPIC1(0xFC);
 	_mascaraPIC2(0xFF);
+
+	RestoreInts();
+
+	/*
+	__asm__("pushf ; cli");
 	
-	_Sti();
+	func(0);
+	__asm__("popf");
+	*/
 	
+
+	printf("CS: %d\n", _read_cs());
+	printf("DS: %d: EDX: %d\n", _read_ds(), _read_edx());
+	printf("SS: %d : SP : %d\n", _read_ss(), _read_sp());
+
 	// A TENER EN CUENTA: SI BARDEO UNA DIRECCION QUE NO EXISTE (COMO LA 0x5000000) IMPRIME -1. NO TIRA ERROR NI NADA.
 	//unsigned int * ptr = (unsigned int *)0x500000;
 	//*ptr = 5;
 	//printf("%d\n", *ptr);
-	paging();
+//	paging();
 	//printf("%d\n", *ptr);
 	
 	printf("\n");
 	__printSystemSymbol();
 
 	shell();
+}
+
+void func(int a){
+	int i = 0;
 }
 
 /*
@@ -271,6 +290,540 @@ block(Task * task, TaskState state)
 	mt_dequeue_time(task);
 	task->state = state;
 }
+
+/*
+--------------------------------------------------------------------------------
+ready - desbloquea un proceso y lo pone en la cola de ready
+
+Si el proceso estaba bloqueado en WaitQueue, Send o Receive, el argumento
+success determina el status de retorno de la funcion que lo bloqueo.
+--------------------------------------------------------------------------------
+*/
+
+void
+__ready(Task * task, bool success)
+{
+	if ( task->state == READY )
+		return;
+
+	mt_dequeue(task);
+	mt_dequeue_time(task);
+	mt_enqueue(task, &ready_q);
+	task->success = success;
+	task->state = READY;
+}
+
+char v1[0x800];
+char v2[0x800];
+
+Task *
+createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, unsigned priority)
+{
+	//Task * task;
+	Task task;
+	InitialStack * s;
+
+	/* ajustar tamano del stack y redondear a numero par */
+	//stacksize = even(stacksize + mt_reserved_stack);
+
+
+	/* alocar estructura del proceso */
+	//task = Malloc(sizeof(Task));
+
+	//task->name = task->send_queue.name = StrDup(name);
+    //task->priority = priority;
+	task.priority = priority;
+	//task->stack = Malloc(stacksize);
+	if(priority == 1)
+		task.stack = v1;
+	else
+		task.stack = v2;
+
+	/* inicializar stack */
+	//s = (InitialStack *)(task->stack + stacksize) - 1;
+	s =  (InitialStack *)(task.stack + stacksize) - 1;
+	s->arg = arg;
+	s->retaddr = exit;				/* direccion de retorno de f() */
+	s->regs.x.eflags = INIFL;
+	s->regs.x.cs = _read_cs();
+	s->regs.x.eip = (unsigned) func;
+
+	s->regs.x.ds = _read_ds();
+
+	task.ss = _read_ds();
+	task.esp = (unsigned) s;
+
+//	return task;
+	return NULL;
+}
+
+
+/*
+--------------------------------------------------------------------------------
+Exit - finaliza el proceso actual
+
+Todos los procesos creados con CreateTask retornan a esta funcion que los mata.
+Esta funcion nunca retorna.
+--------------------------------------------------------------------------------
+*/
+
+
+void
+exit(void)
+{
+	deleteTask(mt_curr_task);
+}
+
+
+
+/*
+--------------------------------------------------------------------------------
+deleteTask - elimina un proceso creado con createTask
+
+Si es el proceso actual, envia un mensaje al proceso de limpieza y se bloquea
+como terminado.
+--------------------------------------------------------------------------------
+*/
+
+void
+free_task(Task * task)
+{
+	/*
+	free(task->name);
+	free(task->stack);
+	free(task);
+	*/
+}
+
+void
+deleteTask(Task * task)
+{
+	if ( task == &main_task )
+		printf("Imposible eliminar el proceso principal\n");
+
+	flushQueue(&task->send_queue, false);
+	DisableInts();
+	if ( task == mt_curr_task )
+	{
+		mt_curr_task->state = TERMINATED;
+		mt_enqueue(mt_curr_task, &terminated_q);
+		scheduler();
+	}
+	else
+	{
+		block(task, TERMINATED);
+		free_task(task);
+	}
+	RestoreInts();
+}
+
+/*
+--------------------------------------------------------------------------------
+free_terminated - elimina las tareas terminadas.
+--------------------------------------------------------------------------------
+*/
+
+void
+free_terminated(void)
+{
+	Task * task;
+
+	while ( task = mt_getlast(&terminated_q) )
+		free_task(task);
+}
+
+/*
+--------------------------------------------------------------------------------
+currentTask - retorna un puntero al proceso actual.
+--------------------------------------------------------------------------------
+*/
+
+Task *
+currentTask(void)
+{
+	return mt_curr_task;
+}
+
+/*
+--------------------------------------------------------------------------------
+pause - suspende el proceso actual
+--------------------------------------------------------------------------------
+*/
+
+void
+pause(void)
+{
+	suspend(mt_curr_task);
+}
+
+
+/*
+--------------------------------------------------------------------------------
+yield - cede voluntariamente la CPU
+--------------------------------------------------------------------------------
+*/
+
+void
+yield(void)
+{
+	ready(mt_curr_task);
+}
+
+
+/*
+--------------------------------------------------------------------------------
+delay - pone al proceso actual a dormir durante una cantidad de milisegundos
+--------------------------------------------------------------------------------
+*/
+
+void
+delay(int msecs)
+{
+	DisableInts();
+	if ( msecs )
+	{
+		block(mt_curr_task, DELAYING);
+		//if ( msecs != FOREVER )
+			mt_enqueue_time(mt_curr_task, msecs_to_ticks(msecs));
+	}
+	else
+		__ready(mt_curr_task, false);
+	scheduler();
+	RestoreInts();
+}
+
+
+/*
+--------------------------------------------------------------------------------
+suspend - suspende un proceso
+--------------------------------------------------------------------------------
+*/
+
+void
+suspend(Task * task)
+{
+	DisableInts();
+	block(task, SUSPENDED);
+	if ( task == mt_curr_task )
+		scheduler();
+	RestoreInts();
+}
+
+/*
+--------------------------------------------------------------------------------
+Ready - pone un proceso en la cola ready
+--------------------------------------------------------------------------------
+*/
+void
+ready(Task * task)
+{
+	DisableInts();
+	__ready(task, false);
+	scheduler();
+	RestoreInts();
+}
+
+/*
+--------------------------------------------------------------------------------
+getPriority - retorna la prioridad de un proceso
+--------------------------------------------------------------------------------
+*/
+
+unsigned
+getPriority(Task * task)
+{
+	return task->priority;
+}
+
+
+/*
+--------------------------------------------------------------------------------
+setPriority - establece la prioridad de un proceso
+
+Si el proceso estaba en una cola, lo desencola y lo vuelve a encolar para
+reflejar el cambio de prioridad en su posición en la cola.
+Si se le ha cambiado la prioridad al proceso actual o a uno que esta ready se
+llama al scheduler.
+--------------------------------------------------------------------------------
+*/
+
+void		
+setPriority(Task * task, unsigned priority)
+{
+	TaskQueue * queue;
+
+	DisableInts();
+	task->priority = priority;
+	if ( queue = task->queue )
+	{
+		mt_dequeue(task);
+		mt_enqueue(task, queue);
+	}
+	if ( task == mt_curr_task || task->state == READY )
+		scheduler();
+	RestoreInts();
+}
+
+
+/*
+--------------------------------------------------------------------------------
+mt_select_task - determina el proximo proceso a ejecutar.
+
+Retorna true si ha cambiado el proceso en ejecucion.
+Llamada desde scheduler() y cuanto retorna una interrupcion de primer nivel.
+Guarda y restaura el contexto del coprocesador y el contexto propio del usuario,
+si existe. 
+--------------------------------------------------------------------------------
+*/
+
+bool 
+mt_select_task(void)
+{
+	Task * ready_task;
+
+	/* Ver si el proceso actual puede conservar la CPU */
+	if ( mt_curr_task->state == CURRENT )
+	{
+		if ( mt_curr_task->atomic_level )		/* No molestar */
+			return false;
+
+		/* Analizar prioridades y ranura de tiempo */
+		ready_task = mt_peeklast(&ready_q);
+		if ( !ready_task || ready_task->priority < mt_curr_task->priority ||
+				ticks_to_run && ready_task->priority == mt_curr_task->priority )
+			return false; 
+
+		/* El proceso actual pierde la CPU */
+		__ready(mt_curr_task, false);
+	}
+
+	/* Obtener el proximo proceso */
+	last_task = mt_curr_task;
+	mt_curr_task = mt_getlast(&ready_q);
+	mt_curr_task->state = CURRENT;
+
+	/* Si es el mismo de antes, no hay nada mas que hacer */
+	if ( mt_curr_task == last_task )
+		return false;
+
+	/* Inicializar ranura de tiempo */
+	ticks_to_run = QUANTUM;
+	return true;
+}
+
+/*
+--------------------------------------------------------------------------------
+scheduler - selecciona el proximo proceso a ejecutar.
+
+Se llama cuando se bloquea el proceso actual o se despierta cualquier proceso.
+No hace nada si se llama desde una interrupcion, porque las interrupciones
+pueden despertar procesos pero recien se cambia contexto al retornar de la
+interrupcion de primer nivel.
+--------------------------------------------------------------------------------
+*/
+
+void
+scheduler(void)
+{
+	if ( mt_select_task() )
+		context_switch();
+}
+
+/*
+--------------------------------------------------------------------------------
+context_switch - cambio de contexto
+
+Por ser una función de tipo interrupt, realiza el guardado y recuperacion del
+contexto de registros en el stack. Llamada desde scheduler().
+--------------------------------------------------------------------------------
+*/
+
+void
+context_switch(void)
+{
+	/*
+	last_task->ss = _read_ss();
+	last_task->sp = _read_sp();
+	_SS = mt_curr_task->ss;
+	_SP = mt_curr_task->sp;
+	*/
+}
+
+/*
+--------------------------------------------------------------------------------
+clockint - interrupcion de tiempo real
+
+Despierta a los procesos de la cola de tiempo que tengan su cuenta de ticks
+agotada, y decrementa la cuenta del primero que quede en la cola.
+Decrementa la ranura de tiempo del proceso actual.
+--------------------------------------------------------------------------------
+*/
+
+void 
+clockint(unsigned irq)
+{
+	Task * task;
+	/*
+	OldInterrupt(irq);
+	disable();
+
+	if ( ticks_to_run )
+		ticks_to_run--;
+	while ( (task = mt_peekfirst_time()) && !task->ticks )
+	{
+		mt_getfirst_time();
+		ready(task, false);
+	}
+	if ( task )
+		task->ticks--;
+	*/
+}
+
+/*
+--------------------------------------------------------------------------------
+Atomic - deshabilita el modo preemptivo para el proceso actual (anidable)
+--------------------------------------------------------------------------------
+*/
+
+void
+atomic(void)
+{
+	++mt_curr_task->atomic_level;
+}
+
+/*
+--------------------------------------------------------------------------------
+Unatomic - habilita el modo preemptivo para el proceso actual (anidable)
+--------------------------------------------------------------------------------
+*/
+
+void
+unatomic(void)
+{
+	if ( mt_curr_task->atomic_level && !--mt_curr_task->atomic_level )
+	{
+		DisableInts();
+		scheduler();
+		RestoreInts();
+	}
+}
+
+
+
+/*
+--------------------------------------------------------------------------------
+createQueue - crea una cola de procesos
+--------------------------------------------------------------------------------
+*/
+/*
+TaskQueue *	
+createQueue(char * name)
+{
+	
+	TaskQueue * queue = Malloc(sizeof(TaskQueue));
+
+	queue->name = StrDup(name);
+	return queue;
+}
+
+*/
+/*
+--------------------------------------------------------------------------------
+DeleteQueue - destruye una cola de procesos
+--------------------------------------------------------------------------------
+*/
+/*
+void
+DeleteQueue(TaskQueue * queue)
+{
+	flushQueue(queue, false);
+	Free(queue->name);
+	Free(queue);
+}
+*/
+
+
+/*
+--------------------------------------------------------------------------------
+WaitQueue, WaitQueueCond, WaitQueueTimed - esperar en una cola de procesos
+
+El valor de retorno es true si el proceso fue despertado por SignalQueue
+o el valor pasado a FlushQueue.
+Si msecs es FOREVER, espera indefinidamente. Si msecs es cero, retorna false.
+--------------------------------------------------------------------------------
+*/
+/*
+bool			
+waitQueue(TaskQueue * queue)
+{
+	return waitQueueTimed(queue, FOREVER);
+}
+
+bool			
+waitQueueTimed(TaskQueue * queue, int msecs)
+{
+	bool success;
+
+	if ( !msecs )
+		return false;
+
+	DisableInts();
+	block(mt_curr_task, WAITING);
+	mt_enqueue(mt_curr_task, queue);
+	if ( msecs != FOREVER )
+		mt_enqueue_time(mt_curr_task, msecs_to_ticks(msecs));
+	scheduler();
+	success = mt_curr_task->success;
+	RestoreInts();
+
+	return success;
+}
+*/
+/*
+--------------------------------------------------------------------------------
+SignalQueue, FlushQueue - funciones para despertar procesos en una cola
+
+SignalQueue despierta el ultimo proceso de la cola (el de mayor prioridad o
+el que llego primero entre dos de la misma prioridad), el valor de retorno 
+es true si desperto a un proceso. Este proceso completa su WaitQueue() 
+exitosamente.
+FlushQueue despierta a todos los procesos de la cola, que completan su
+WaitQueue() con el resultado que se pasa como argumento.
+--------------------------------------------------------------------------------
+*/
+/*
+bool		signalQueue(TaskQueue * queue)
+{
+	Task * task;
+
+	DisableInts();
+	if ( task = mt_getlast(queue) )
+	{
+		__ready(task, true);
+		scheduler();
+	}
+	RestoreInts();
+
+	return task != NULL;
+}
+*/
+void			
+flushQueue(TaskQueue * queue, bool success)
+{
+	Task * task;
+
+	DisableInts();
+	if ( mt_peeklast(queue) )
+	{
+		while ( task = mt_getlast(queue) )
+			__ready(task, success);
+		scheduler();
+	}
+	RestoreInts();
+}
+
+
+
 
 
 /*

@@ -3,7 +3,6 @@
 
 #include "../include/defs.h"
 
-
 typedef enum {SUSPENDED, READY, CURRENT, DELAYING, WAITING, SENDING, RECEIVING, TERMINATED} TaskState;
 typedef struct Task Task;
 
@@ -17,10 +16,12 @@ typedef struct{
 struct Task{
 	char * 	name;
 	int		pid;
-	int 	priority;
+	unsigned 	priority;
+	unsigned	atomic_level;
 	TaskState state;	
 
 	char * 	stack;
+	int		ss;
 	int		esp;
 	
 	// Para la cola en la que esta el proceso
@@ -39,19 +40,54 @@ struct Task{
 	Task *	from;			// Indica el emisor del ultimo mensaje recibido
 	char *	msg;			// Mensaje a mandar o recibido
 	int		msg_size; 		// Tamaño del mensaje
-	TaskQueue	sendQueue;	// La cola donde los demas procesos esperan para dejarle un mensaje a este
+	TaskQueue	send_queue;	// La cola donde los demas procesos esperan para dejarle un mensaje a este
 };
+
+
+typedef struct
+{
+	unsigned 			ebp, edi, esi;
+	unsigned short		ds, es, cs;
+	unsigned 			edx, ecx, ebx, eax, eip, eflags;
+}
+WordRegs;
+
+typedef struct
+{
+	unsigned short		bp, di, si, ds, es;
+	unsigned char		dl, dh, cl, ch, bl, bh, al, ah;
+	unsigned short		ip, cs, flags;
+}
+ByteRegs;
+
+typedef union
+{
+	WordRegs	x;
+	ByteRegs	h;
+}
+InterruptRegs;
+
+
+typedef struct
+{
+	InterruptRegs   regs;
+	void			(*retaddr)(void);
+	void *			arg;
+}
+InitialStack;
 
 
 // Puntero a la funcion a ejecutar al iniciar el proceso
 typedef void (*TaskFunc)(void * arg);
 
-Task *		createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, int priority);
+Task *		createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, unsigned priority);
 Task *		currentTask(void);
 void		deleteTask(Task * task);
 
-int			getPriority(Task * task);
-void		setPriority(Task * task, int priority);
+unsigned	getPriority(Task * task);
+void		setPriority(Task * task, unsigned priority);
+void		atomic(void);
+void		unatomic(void);
 void		suspend(Task * task);
 void		ready(Task * task);
 
@@ -69,4 +105,6 @@ void		pause(void);
 void		yield(void);
 void		delay(int msecs);
 void		exit(void);
+
+
 #endif

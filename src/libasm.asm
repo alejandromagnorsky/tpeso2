@@ -1,4 +1,9 @@
 GLOBAL  _read_msw,_lidt
+GLOBAL	_read_cs
+GLOBAL	_read_ds
+GLOBAL	_read_ss
+GLOBAL	_read_sp
+GLOBAL	_read_edx
 GLOBAL	_read_cr0
 GLOBAL	_read_cr3
 GLOBAL	_write_cr0
@@ -90,35 +95,47 @@ EXTERN __KBUFFER_PTR_
 SECTION .text
 
 
-_Cli:
-	cli			; limpia flag de interrupciones
-	ret
-
-_Sti:
-
-	sti			; habilita interrupciones por flag
-	ret
-
-
-
-_mascaraPIC1:			; Escribe mascara del PIC 1
-	push    ebp
-        mov     ebp, esp
-        
-        pop     ebp
-        retn
+_mascaraPIC1:				; Escribe mascara del PIC 1
+		push	 ebp
+		mov 	ebp, esp
+		mov 	ax, [ss:ebp + 8]	; ax = mascara de 16 bits
+		out	 	21h, al
+		pop	 	ebp
+		retn
 
 _mascaraPIC2:			; Escribe mascara del PIC 2
-	push    ebp
+		push    ebp
         mov     ebp, esp
         mov     ax, [ss:ebp+8]  ; ax = mascara de 16 bits
-        out	0A1h,al
+        out		0A1h,al
         pop     ebp
         retn
+
+
+_read_cs:
+		mov eax, cs
+		retn
+
+_read_ds:
+		mov eax, ds
+		retn
+
+_read_ss:
+		mov eax, ss
+		retn
+
+_read_sp:
+		mov eax, esp
+		retn
+
+_read_edx:
+		mov eax, edx
+		retn
 
 _read_msw:
         smsw    ax		; Obtiene la Machine Status Word
         retn
+
 
 _read_cr0:
 		mov eax, cr0
