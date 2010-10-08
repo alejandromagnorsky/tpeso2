@@ -2,6 +2,7 @@
 #define _kernel_
 #include "../include/defs.h"
 #include "../include/mtask.h"
+#include "../include/queue.h"
 
 /********************************** 
 *
@@ -20,7 +21,8 @@
 #define INIFL			0x200
 #define QUANTUM			2
 #define MSPERTICK 		55
-
+#define	DisableInts()	__asm__ ( "cli" )
+#define	RestoreInts()	__asm__ ( "sti" )
 
 typedef struct{
 	int buf[KBUFFER_SIZE];
@@ -63,10 +65,11 @@ size_t __read(int fd, void* buffer, size_t count);
 void setupIDT();
 void initializePics();
 
-Task * last_task;				/* proceso anterior */
+Task * mt_curr_task;		/* proceso en ejecucion */
+Task * last_task;			/* proceso anterior */
 Task main_task;				/* proceso principal */
-int ticks_to_run;				/* ranura de tiempo */
-TaskQueue ready_q;				/* cola de procesos ready */
+int ticks_to_run;			/* ranura de tiempo */
+TaskQueue ready_q;			/* cola de procesos ready */
 TaskQueue terminated_q;		/* cola de procesos terminados */
 
 void scheduler(void);
