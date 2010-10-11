@@ -132,7 +132,32 @@ void int_1F(){
 	printf("Reserved.\n");
 }
 
+/*
+--------------------------------------------------------------------------------
+int_20 - interrupcion de tiempo real
+
+Despierta a los procesos de la cola de tiempo que tengan su cuenta de ticks
+agotada, y decrementa la cuenta del primero que quede en la cola.
+Decrementa la ranura de tiempo del proceso actual.
+--------------------------------------------------------------------------------
+*/
+
+
 void int_20() {
+	printf("hola");
+	/*
+	Task * task;
+	
+	if ( ticks_to_run )
+		ticks_to_run--;
+	while ( (task = mt_peekfirst_time()) && !task->ticks )
+	{
+		mt_getfirst_time();
+		ready(task, false);
+	}
+	if ( task )
+		task->ticks--;
+	*/
 }
 
 void int_21(){
