@@ -144,7 +144,7 @@ Decrementa la ranura de tiempo del proceso actual.
 
 
 void int_20() {
-	printf("hola");
+	//printf("hola");
 	/*
 	Task * task;
 	
