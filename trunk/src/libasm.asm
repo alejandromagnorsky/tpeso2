@@ -95,13 +95,13 @@ EXTERN __KBUFFER_PTR_
 SECTION .text
 
 
-_mascaraPIC1:				; Escribe mascara del PIC 1
-		push	 ebp
-		mov 	ebp, esp
-		mov 	ax, [ss:ebp + 8]	; ax = mascara de 16 bits
-		out	 	21h, al
-		pop	 	ebp
-		retn
+_mascaraPIC1:			; Escribe mascara del PIC 1
+	push    ebp
+        mov     ebp, esp
+        mov     ax, [ss:ebp+8]  ; ax = mascara de 16 bits
+        out	21h,al
+        pop     ebp
+        retn
 
 _mascaraPIC2:			; Escribe mascara del PIC 2
 		push    ebp
@@ -161,16 +161,33 @@ _write_cr3:
 		pop ebp
 		retn
 
-_lidt:				; Carga el IDTR
-        push    ebp
-        mov     ebp, esp
-        push    ebx
-        mov     ebx, [ss: ebp + 6] ; ds:bx = puntero a IDTR 
-	rol	ebx,16		    	
-	lidt    [ds: ebx]          ; carga IDTR
-        pop     ebx
-        pop     ebp
-        retn
+; _lidt
+; Loads IDTR with a value sent as a parameter.
+
+_lidt:
+
+    ; Stack frame is built.
+    push        EBP
+    mov        EBP, ESP
+
+    ; Registers are backed-up.
+    push        EBX
+
+    ; IDTR pointer is loaded.
+    mov        EBX, [SS: EBP+8]
+
+    ; IDTR is loaded.
+    lidt        [DS: EBX]
+
+    ; Backed-up registers are loaded.
+    pop        EBX
+
+    ; Stack frame is destroyed.
+    mov        ESP, EBP
+    pop        EBP
+
+    retn
+
 
 
 _int_00_hand:				
@@ -495,27 +512,24 @@ _int_1F_hand:
 
 
 _int_20_hand:				; Handler de INT 20h (Timer tick)
-		cli
-
-        push    ds
-        push    es                      ; Se salvan los registros
-        pusha     
+;	push    ds
+;        push    es                      ; Se salvan los registros
+;        pusha     
                       
-        mov     ax, 10h			
-        mov     ds, ax			; Carga de DS y ES con el valor del selector a utilizar.
-        mov     es, ax                  
-        call    int_20                 
+;        mov     ax, 10h			
+;        mov     ds, ax			; Carga de DS y ES con el valor del selector a utilizar.
+;        mov     es, ax                  
+;        call    int_20                 
 
-		popa                            		
-        pop     es
-        pop     ds
+;		popa                            		
+;        pop     es
+;        pop     ds
 
 
         mov	al, 20h			; Envio de EOI generico al PIC
 		out	20h, al
 
-		sti
-        iret
+	iret
 
 _int_21_hand:				; Handler de INT 21h (Teclado)
         push    ds
@@ -526,7 +540,7 @@ _int_21_hand:				; Handler de INT 21h (Teclado)
         mov     ds, ax			; Carga de DS y ES con el valor del selector a utilizar.
         mov     es, ax	
 
-	call	int_21
+        call	int_21
 
         mov	al, 20h			; Envio de EOI generico al PIC
 	out	20h, al
@@ -534,10 +548,6 @@ _int_21_hand:				; Handler de INT 21h (Teclado)
         pop     es
         pop     ds
         iret
-
-
-
-
 
 _int_80_hand:
 	push	ebp
