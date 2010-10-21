@@ -512,27 +512,30 @@ _int_1F_hand:
 
 
 _int_20_hand:				; Handler de INT 20h (Timer tick)
-;	push    ds
-;        push    es                      ; Se salvan los registros
-;        pusha     
-                      
-;        mov     ax, 10h			
-;        mov     ds, ax			; Carga de DS y ES con el valor del selector a utilizar.
-;        mov     es, ax                  
-;        call    int_20                 
+	cli
 
-;		popa                            		
-;        pop     es
-;        pop     ds
-
+	push    ds
+        push    es                      ; Se salvan los registros
+        pusha     
+                     
+	mov     ax, 10h			
+        mov     ds, ax			; Carga de DS y ES con el valor del selector a utilizar.
+        mov     es, ax                  
+        call    int_20                 
 
         mov	al, 20h			; Envio de EOI generico al PIC
-		out	20h, al
+	out	20h, al
 
+	popa                            		
+        pop     es
+        pop     ds
+
+	sti
 	iret
 
 _int_21_hand:				; Handler de INT 21h (Teclado)
-        push    ds
+	cli
+	push    ds
         push    es                      ; Se salvan los registros
         pusha      
                      
@@ -547,7 +550,8 @@ _int_21_hand:				; Handler de INT 21h (Teclado)
 	popa                            
         pop     es
         pop     ds
-        iret
+	sti        
+	iret
 
 _int_80_hand:
 	push	ebp
