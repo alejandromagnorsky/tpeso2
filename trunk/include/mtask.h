@@ -15,14 +15,13 @@ typedef struct{
 
 struct Task{
 	char * 	name;
-	int		pid;
 	unsigned 	priority;
 	unsigned	atomic_level;
 	TaskState state;	
 
 	char * 	stack;
-	int		ss;
-	int		esp;
+	int	ss;
+	int	esp;
 	
 	// Para la cola en la que esta el proceso
 	TaskQueue *	queue; 	// Cola de procesos en la que se encuentra el proceso
@@ -30,7 +29,7 @@ struct Task{
 	Task *	next;		// El task siguiente a este en la cola de procesos especifica
 	
 	// Para cuando usa sleep
-	int		ticks;	// Ticks restantes para ser despertado
+	int	ticks;	// Ticks restantes para ser despertado
 	bool	in_time_q;		// Si es verdadero, el proceso esta en la cola del tiempo
 	Task *	time_prev;		// El task anterior a este en la cola del tiempo
 	Task *	time_next;		// El task siguiente a este en la cola del tiempo
@@ -44,43 +43,11 @@ struct Task{
 };
 
 
-typedef struct
-{
-	unsigned 			ebp, edi, esi;
-	unsigned short		ds, es, cs;
-	unsigned 			edx, ecx, ebx, eax, eip, eflags;
-}
-WordRegs;
-
-typedef struct
-{
-	unsigned short		bp, di, si, ds, es;
-	unsigned char		dl, dh, cl, ch, bl, bh, al, ah;
-	unsigned short		ip, cs, flags;
-}
-ByteRegs;
-
-typedef union
-{
-	WordRegs	x;
-	ByteRegs	h;
-}
-InterruptRegs;
-
-
-typedef struct
-{
-	InterruptRegs   regs;
-	void			(*retaddr)(void);
-	void *			arg;
-}
-InitialStack;
-
 
 // Puntero a la funcion a ejecutar al iniciar el proceso
 typedef void (*TaskFunc)(void * arg);
 
-Task *		createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, unsigned priority);
+Task *		createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority);
 Task *		currentTask(void);
 void		deleteTask(Task * task);
 

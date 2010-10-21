@@ -9,6 +9,8 @@ GLOBAL	_read_cr3
 GLOBAL	_write_cr0
 GLOBAL	_write_cr3
 GLOBAL	_read_scancode
+GLOBAL	_init_stack
+GLOBAL	_change_stack
 GLOBAL  _turn_cursor_on
 GLOBAL  _turn_cursor_off
 GLOBAL 	_move_cursor
@@ -86,6 +88,7 @@ EXTERN	int_1E
 EXTERN	int_1F
 EXTERN  int_20
 EXTERN  int_21
+EXTERN 	scheduler
 EXTERN __write
 EXTERN __read
 EXTERN getAscii
@@ -514,24 +517,22 @@ _int_1F_hand:
 _int_20_hand:				; Handler de INT 20h (Timer tick)
 	cli
 
-	push    ds
-        push    es                      ; Se salvan los registros
-        pusha     
+	pushad
                      
-	mov     ax, 10h			
-        mov     ds, ax			; Carga de DS y ES con el valor del selector a utilizar.
-        mov     es, ax                  
-        call    int_20                 
+	call    int_20                
+	
+	;call scheduler	
+	
+	;mov 	esp, eax		; Cambia el stack
 
-        mov	al, 20h			; Envio de EOI generico al PIC
+	mov	al, 20h			; Envio de EOI generico al PIC
 	out	20h, al
 
-	popa                            		
-        pop     es
-        pop     ds
+	popad                       		
 
 	sti
 	iret
+
 
 _int_21_hand:				; Handler de INT 21h (Teclado)
 	cli
@@ -614,6 +615,34 @@ _read_scancode:
 	in	al, 60h
 	leave
 	ret       
+
+
+_init_stack:
+	push ebp
+	mov ebp, esp
+    
+        mov eax, [ebp + 12] ; Puntero a la parte inferior del nuevo stack
+        mov esp, eax        ; Cambia al nuevo stack
+            
+        mov eax, [ebp + 16] ; Funcion para eliminar el task
+        push eax            
+            
+        mov eax, [ebp + 20] ; Nuevos flags
+        push eax            
+            
+        push cs             ; Code segment.
+            
+        mov eax, [ebp + 8]  ; Funcion inicial del task
+        push eax           
+            
+        pushad              ; Pushea los registros
+        mov eax, esp        ; Retorna el puntero al stack
+            
+	mov esp, ebp
+	pop ebp
+	ret
+
+
 
 _move_cursor:
 	push ebp

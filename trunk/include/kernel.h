@@ -72,8 +72,8 @@ int ticks_to_run;			/* ranura de tiempo */
 TaskQueue ready_q;			/* cola de procesos ready */
 TaskQueue terminated_q;		/* cola de procesos terminados */
 
-void scheduler(void);
-void context_switch(void); // Interrupt type
+int scheduler(void);
+void context_switch(void);
 
 void block(Task * task, TaskState state);
 void __ready(Task * task, bool success);

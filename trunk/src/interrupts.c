@@ -144,8 +144,6 @@ Decrementa la ranura de tiempo del proceso actual.
 
 
 void int_20() {
-	//printf("hola");
-	/*
 	Task * task;
 	
 	if ( ticks_to_run )
@@ -153,11 +151,10 @@ void int_20() {
 	while ( (task = mt_peekfirst_time()) && !task->ticks )
 	{
 		mt_getfirst_time();
-		ready(task, false);
+		__ready(task, false); 
 	}
 	if ( task )
 		task->ticks--;
-	*/
 }
 
 void int_21(){
