@@ -23,6 +23,8 @@ unsigned int	_read_ds();
 unsigned int	_read_ss();
 unsigned int	_read_sp();
 unsigned int	_read_edx();
+unsigned int	_init_stack();
+unsigned int	_change_stack();
 
 unsigned int	_read_cr0();
 unsigned int	_read_cr3();

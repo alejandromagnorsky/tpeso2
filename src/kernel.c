@@ -5,7 +5,8 @@
 
 #include "../include/multiboot.h"
 void __printMemoryMap(multiboot_info_t * mbd);
-void func(int a);
+void printA();
+void printB();
 
 // INCLUDE TEMPORAL
 // extern char page_map[];
@@ -88,17 +89,24 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	//unsigned int * ptr = (unsigned int *)0x500000;
 	//*ptr = 5;
 	//printf("%d\n", *ptr);
-//	paging();
+	paging();
 	//printf("%d\n", *ptr);
 	
 	printf("\n");
 	__printSystemSymbol();
 
+	createTask(printA, 1000, NULL, 1);
+	createTask(printB, 1000, NULL, 2);
+	
 	shell();
 }
 
-void func(int a){
-	int i = 0;
+void printA(){
+	printf("A");
+}
+
+void printB(){
+	printf("B");
 }
 
 /*
@@ -314,15 +322,15 @@ __ready(Task * task, bool success)
 	task->state = READY;
 }
 
-char v1[0x800];
-char v2[0x800];
+
 
 Task *
-createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, unsigned priority)
+createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority)
 {
 	//Task * task;
 	Task task;
-	InitialStack * s;
+	static char v1[500];
+	static char v2[500];
 
 	/* ajustar tamano del stack y redondear a numero par */
 	//stacksize = even(stacksize + mt_reserved_stack);
@@ -332,7 +340,7 @@ createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, unsigned 
 	//task = Malloc(sizeof(Task));
 
 	//task->name = task->send_queue.name = StrDup(name);
-    //task->priority = priority;
+    	//task->priority = priority;
 	task.priority = priority;
 	//task->stack = Malloc(stacksize);
 	if(priority == 1)
@@ -341,18 +349,9 @@ createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, unsigned 
 		task.stack = v2;
 
 	/* inicializar stack */
-	//s = (InitialStack *)(task->stack + stacksize) - 1;
-	s =  (InitialStack *)(task.stack + stacksize) - 1;
-	s->arg = arg;
-	s->retaddr = exit;				/* direccion de retorno de f() */
-	s->regs.x.eflags = INIFL;
-	s->regs.x.cs = _read_cs();
-	s->regs.x.eip = (unsigned) func;
-
-	s->regs.x.ds = _read_ds();
-
+	
 	task.ss = _read_ds();
-	task.esp = (unsigned) s;
+	task.esp = _init_stack(func, task.stack, exit, INIFL);
 
 //	return task;
 	return NULL;
@@ -361,7 +360,7 @@ createTask(TaskFunc func, unsigned stacksize, void * arg, char * name, unsigned 
 
 /*
 --------------------------------------------------------------------------------
-Exit - finaliza el proceso actual
+exit - finaliza el proceso actual
 
 Todos los procesos creados con CreateTask retornan a esta funcion que los mata.
 Esta funcion nunca retorna.
@@ -615,41 +614,19 @@ mt_select_task(void)
 /*
 --------------------------------------------------------------------------------
 scheduler - selecciona el proximo proceso a ejecutar.
-
-Se llama cuando se bloquea el proceso actual o se despierta cualquier proceso.
-No hace nada si se llama desde una interrupcion, porque las interrupciones
-pueden despertar procesos pero recien se cambia contexto al retornar de la
-interrupcion de primer nivel.
 --------------------------------------------------------------------------------
 */
 
-void
+int
 scheduler(void)
 {
-	if ( mt_select_task() )
-		context_switch();
+	mt_select_task();
+	last_task->esp = _read_sp();
+	return mt_curr_task->esp;			
 }
 
-/*
---------------------------------------------------------------------------------
-context_switch - cambio de contexto
 
-Por ser una función de tipo interrupt, realiza el guardado y recuperacion del
-contexto de registros en el stack. Llamada desde scheduler().
---------------------------------------------------------------------------------
-*/
 
-void
-context_switch(void)
-{
-	/*
-	last_task->ss = _read_ss();
-	last_task->sp = _read_sp();
-	_SS = mt_curr_task->ss;
-	_SP = mt_curr_task->sp;
-	*/
-}
-
 /*
 --------------------------------------------------------------------------------
 Atomic - deshabilita el modo preemptivo para el proceso actual (anidable)
