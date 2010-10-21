@@ -66,7 +66,7 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	setupIDT();
 
 	// Habilito interrupcion del timer tick y del teclado
-	_mascaraPIC1(0xFD);
+	_mascaraPIC1(0xFC);
 
 	_mascaraPIC2(0xFF);
 
