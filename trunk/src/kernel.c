@@ -62,7 +62,7 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	__INIT_TTY();
 
 	_turn_cursor_on();
-	sysinfo();
+	
 	
 	setupIDT();
 
@@ -72,6 +72,11 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	_mascaraPIC2(0xFF);
 
 	RestoreInts();
+
+
+	printf("EMPEZE\n\n\n");
+
+	sysinfo();
 
 	/*
 	__asm__("pushf ; cli");
@@ -95,9 +100,10 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	printf("\n");
 	__printSystemSymbol();
 
+
 	createTask(printA, 1000, NULL, 1);
 	createTask(printB, 1000, NULL, 2);
-	
+
 	shell();
 }
 
@@ -740,7 +746,8 @@ WaitQueue() con el resultado que se pasa como argumento.
 --------------------------------------------------------------------------------
 */
 /*
-bool		signalQueue(TaskQueue * queue)
+bool		
+signalQueue(TaskQueue * queue)
 {
 	Task * task;
 

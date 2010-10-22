@@ -49,6 +49,7 @@ GLOBAL  _int_1F_hand
 GLOBAL  _int_20_hand
 GLOBAL  _int_21_hand
 GLOBAL  _int_80_hand
+GLOBAL  _int_80_call
 GLOBAL	_inport
 GLOBAL  _outport
 GLOBAL  _mascaraPIC1,_mascaraPIC2,_Cli,_Sti
@@ -554,26 +555,37 @@ _int_21_hand:				; Handler de INT 21h (Teclado)
 	sti        
 	iret
 
-_int_80_hand:
-	push	ebp
-	mov	ebp, esp
-	push    ds
-        push    es                      ; Se salvan los registros
+_int_80_call:
+	push ebp
+	mov ebp, esp
 
-	push dword	[ebp+12]		; Pushea los parámetros de read y write
-	push dword	[ebp+16]
-	push dword	[ebp+20]
-	mov	eax, [ebp+8]		; ebp+8 = 0 --> Read. ebp+20 = 1 --> Write
+	mov ebx, [ebp+12]
+	mov ecx, [ebp+16]
+	mov edx, [ebp+20]
+	mov eax, [ebp+8]
+
+	int 80h
+
+	leave
+	ret
+
+_int_80_hand:
+	cli
+	push ebp
+	mov ebp, esp
+
+	push dword ebx	; Pushea los parámetros de read y write
+	push dword ecx
+	push dword edx
+
 	cmp	eax, 0
 	je	read
 	jmp	write
 
 continue:
-	add	esp, 12	
-	pop     es
-        pop     ds
 	leave
-	ret
+	sti
+	iret
 read:
 	call	__read
 	jmp	continue
