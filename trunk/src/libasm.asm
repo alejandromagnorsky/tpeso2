@@ -90,6 +90,7 @@ EXTERN	int_1F
 EXTERN  int_20
 EXTERN  int_21
 EXTERN 	scheduler
+EXTERN 	save_esp
 EXTERN __write
 EXTERN __read
 EXTERN getAscii
@@ -517,19 +518,25 @@ _int_1F_hand:
 
 _int_20_hand:				; Handler de INT 20h (Timer tick)
 	cli
-
 	pushad
-                     
-	call    int_20                
+
+	;call    int_20                
 	
-	;call scheduler	
-	
-	;mov 	esp, eax		; Cambia el stack
+	call 	scheduler	
+	mov		ebx, esp		; Guarda el esp
+	push	eax				; Pushea la respuesta del scheduler
+
+	push	ebx
+	call 	save_esp	
+	pop		ebx
+
+	pop		eax
+	mov		esp, eax	; Cambia el stack
 
 	mov	al, 20h			; Envio de EOI generico al PIC
 	out	20h, al
 
-	popad                       		
+	popad                    		
 
 	sti
 	iret
@@ -558,7 +565,7 @@ _int_21_hand:				; Handler de INT 21h (Teclado)
 _int_80_call:
 	push ebp
 	mov ebp, esp
-
+	
 	mov ebx, [ebp+12]
 	mov ecx, [ebp+16]
 	mov edx, [ebp+20]

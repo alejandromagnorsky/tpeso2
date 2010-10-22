@@ -45,7 +45,7 @@ struct Task{
 
 
 // Puntero a la funcion a ejecutar al iniciar el proceso
-typedef void (*TaskFunc)(void * arg);
+typedef void (*TaskFunc)();
 
 Task *		createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority);
 Task *		currentTask(void);
