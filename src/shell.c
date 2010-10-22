@@ -193,6 +193,9 @@ void __getShellArguments(char * ans){
 
 void shell(){
 
+	sysinfo();
+	printf("\n");
+	__printSystemSymbol();
 	
 	__QTY_PROGRAMS = 0;
 	__init_history();

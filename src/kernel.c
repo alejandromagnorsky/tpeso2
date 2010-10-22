@@ -2,7 +2,7 @@
 #include "../include/kernel.h"
 #include "../include/keyboard.h"
 #include "../include/interrupts.h"
-
+#include "../include/shell.h"
 #include "../include/multiboot.h"
 void __printMemoryMap(multiboot_info_t * mbd);
 void printA();
@@ -41,8 +41,8 @@ size_t __write(int fd, const void* buffer, size_t count){
 	return count;
 }
 
-
-
+Task * vec[3];
+#define STACKSIZE 1024
 
 /**********************************************
 kmain() 
@@ -62,33 +62,14 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	__INIT_TTY();
 
 	_turn_cursor_on();
-	
-	
+		
 	setupIDT();
 
 	// Habilito interrupcion del timer tick y del teclado
 	_mascaraPIC1(0xFC);
 
 	_mascaraPIC2(0xFF);
-
-	RestoreInts();
-
-
-	printf("EMPEZE\n\n\n");
-
-	sysinfo();
-
-	/*
-	__asm__("pushf ; cli");
 	
-	func(0);
-	__asm__("popf");
-	*/
-	
-
-	printf("CS: %d\n", _read_cs());
-	printf("DS: %d: EDX: %d\n", _read_ds(), _read_edx());
-	printf("SS: %d : SP : %d\n", _read_ss(), _read_sp());
 
 	// A TENER EN CUENTA: SI BARDEO UNA DIRECCION QUE NO EXISTE (COMO LA 0x5000000) IMPRIME -1. NO TIRA ERROR NI NADA.
 	//unsigned int * ptr = (unsigned int *)0x500000;
@@ -96,23 +77,69 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	//printf("%d\n", *ptr);
 	paging();
 	//printf("%d\n", *ptr);
+
+	/* inicializar proceso principal */
+	main_task.name = "Main Task";
+	main_task.state = CURRENT;
+	main_task.priority = 0;
+	main_task.send_queue.name = main_task.name;
+	ticks_to_run = QUANTUM;
+	mt_curr_task = &main_task;
+
+
+	static Task task1;
+	static Task task2;
+	static Task task3;
+	static char v1[STACKSIZE];
+	static char v2[STACKSIZE];
+	static char v3[STACKSIZE];
+
+	task1.priority = 1;
+	task1.stack = v1;
+	task2.priority = 2;
+	task2.stack = v2;
+	task3.priority = 0;
+	task3.stack = v3;
 	
-	printf("\n");
-	__printSystemSymbol();
+	task1.ss = _read_ds();
+	task1.esp = _init_stack(printA, task1.stack+STACKSIZE-1, exit, INIFL);
+	task2.ss = _read_ds();
+	task2.esp = _init_stack(shell, task2.stack+STACKSIZE-1, exit, INIFL);
+	task3.ss = _read_ds();
+	task3.esp = _init_stack(do_nothing, task3.stack+STACKSIZE-1, exit, INIFL);
+	
+	vec[0] = &task1;
+	vec[1] = &task2;
+	vec[2] = &task3;
 
+	RestoreInts();
 
-	createTask(printA, 1000, NULL, 1);
-	createTask(printB, 1000, NULL, 2);
+	do_nothing();
 
-	shell();
+//	sysinfo();
+//	printf("\n");
+//	__printSystemSymbol();
+//	shell();
 }
 
 void printA(){
-	printf("A");
+	long j = 0;
+	while(true){
+		j++;
+		if(j % 50000 == 0)
+			printf("%d-", j);
+		//printf("A");
+	}
 }
 
 void printB(){
-	printf("B");
+	int i = 0;
+	while(true){
+		i++;
+		if(i % 1000 == 0)
+			printf("%d", i);			
+		printf("_");
+	}
 }
 
 /*
@@ -357,7 +384,7 @@ createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority)
 	/* inicializar stack */
 	
 	task.ss = _read_ds();
-	task.esp = _init_stack(func, task.stack, exit, INIFL);
+	task.esp = _init_stack(func, task.stack+STACKSIZE-1, exit, INIFL);
 
 //	return task;
 	return NULL;
@@ -623,15 +650,38 @@ scheduler - selecciona el proximo proceso a ejecutar.
 --------------------------------------------------------------------------------
 */
 
+
 int
 scheduler(void)
 {
-	mt_select_task();
-	last_task->esp = _read_sp();
-	return mt_curr_task->esp;			
+	//mt_select_task();
+	/*int i;
+	for(i = 0; i < 10000; i++)
+			;
+	
+	if( mt_curr_task == &main_task){
+		mt_curr_task = vec[0];
+	} 
+	last_task = mt_curr_task;
+	*/
+
+	if(rand() > 200)
+		mt_curr_task = vec[0];
+	else 
+		mt_curr_task = vec[1];
+	last_task = mt_curr_task;
+
+//	printf("CURR_TASK: %d, LAST TASK: %d\n", mt_curr_task->priority, last_task->priority);
+//	printf("\nESP: %d\n", mt_curr_task->esp);
+	return mt_curr_task->esp;
 }
 
-
+void
+save_esp(int esp){
+//printf("\nLAST ESP: %d, CURRENT ESP: %d, Arg ESP: %d\n", last_task->esp, mt_curr_task->esp, esp);
+	last_task->esp = esp;
+	return;
+}
 
 /*
 --------------------------------------------------------------------------------
@@ -777,7 +827,10 @@ flushQueue(TaskQueue * queue, bool success)
 	RestoreInts();
 }
 
-
+void do_nothing(){ 
+	while(true)
+		;
+}
 
 
 

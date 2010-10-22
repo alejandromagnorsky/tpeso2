@@ -73,6 +73,7 @@ TaskQueue ready_q;			/* cola de procesos ready */
 TaskQueue terminated_q;		/* cola de procesos terminados */
 
 int scheduler(void);
+void save_esp(int esp);
 void context_switch(void);
 
 void block(Task * task, TaskState state);
@@ -83,6 +84,6 @@ int msecs_to_ticks(int msecs);
 int ticks_to_msecs(int ticks);
 
 void free_terminated(void);		/* libera tareas terminadas */
-void do_nothing(void * arg);		/* funcion del proceso nulo */
+void do_nothing();		/* funcion del proceso nulo */
 
 #endif
