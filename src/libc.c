@@ -137,7 +137,7 @@ int scanf(const char * str, ...){
 
 
 int read(int fd, int * c, size_t count){
-        return _int_80_hand(0, fd, c, count);
+        return _int_80_call(0, fd, c, count);
 }
 
 
@@ -194,7 +194,7 @@ int printf(const char * str, ...){
 }
 
 int write(int fd, int * c, size_t count){
-        return _int_80_hand(1, fd, c, count);
+        return _int_80_call(1, fd, c, count);
 }
 
 int pow(int n, int exp){
