@@ -4,7 +4,7 @@
 
 void top(TaskQueue * queue, int iterations );
 
-Task * getNextTask(TaskQueue * queue);
+Task * getNextTaskLottery(TaskQueue * queue);
 
 /*
 
@@ -27,7 +27,7 @@ int main(){
 	}
 
 	for(i=0;i<500;i++){
-		getNextTask(queue);
+		getNextTaskLottery(queue);
 	}
 	top(queue,500);
 }
@@ -45,7 +45,7 @@ void top(TaskQueue * queue, int iterations ){
 	printf("\t\t %d\n", (int)top);
 }
 
-Task * getNextTask(TaskQueue * queue){
+Task * getNextTaskLottery(TaskQueue * queue){
 	int qty=0;
 	Task * itr;
 	for(itr=queue->head; itr != NULL && queue->tail;itr=itr->next)

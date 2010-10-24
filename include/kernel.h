@@ -19,6 +19,7 @@
 
 #define NULL_STACK		256 			/* tamano de stack para proceso nulo */ 
 #define INIFL			0x200
+#define STACKSIZE 		512
 #define QUANTUM			2
 #define MSPERTICK 		55
 #define	DisableInts()	__asm__ ( "cli" )
@@ -71,10 +72,6 @@ Task main_task;				/* proceso principal */
 int ticks_to_run;			/* ranura de tiempo */
 TaskQueue ready_q;			/* cola de procesos ready */
 TaskQueue terminated_q;		/* cola de procesos terminados */
-
-int scheduler(void);
-void save_esp(int esp);
-void context_switch(void);
 
 void block(Task * task, TaskState state);
 void __ready(Task * task, bool success);
