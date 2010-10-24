@@ -90,6 +90,8 @@ EXTERN	int_1F
 EXTERN  int_20
 EXTERN  int_21
 EXTERN 	scheduler
+EXTERN 	getNextTask
+EXTERN 	load_esp
 EXTERN 	save_esp
 EXTERN __write
 EXTERN __read
@@ -522,15 +524,15 @@ _int_20_hand:				; Handler de INT 20h (Timer tick)
 
 	;call    int_20                
 	
-	call 	scheduler	
-	mov		ebx, esp		; Guarda el esp
-	push	eax				; Pushea la respuesta del scheduler
+	mov 	eax, esp
+	push 	eax
+	call	save_esp
+	pop 	eax
 
-	push	ebx
-	call 	save_esp	
+	call 	getNextTask
+	push 	eax
+	call 	load_esp	
 	pop		ebx
-
-	pop		eax
 	mov		esp, eax	; Cambia el stack
 
 	mov	al, 20h			; Envio de EOI generico al PIC

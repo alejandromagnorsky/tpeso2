@@ -4,6 +4,7 @@
 #include "../include/interrupts.h"
 #include "../include/shell.h"
 #include "../include/multiboot.h"
+
 void __printMemoryMap(multiboot_info_t * mbd);
 void printA();
 void printB();
@@ -12,10 +13,9 @@ void printB();
 // extern char page_map[];
 ////////////////////////
 
-
 DESCR_INT idt[0x81];	/* IDT de 81h entradas*/
 IDTR idtr;				/* IDTR */
-
+Task * vec[3];
 
 
 int getSeconds(){
@@ -41,8 +41,6 @@ size_t __write(int fd, const void* buffer, size_t count){
 	return count;
 }
 
-Task * vec[3];
-#define STACKSIZE 1024
 
 /**********************************************
 kmain() 
@@ -104,9 +102,9 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	task1.ss = _read_ds();
 	task1.esp = _init_stack(printA, task1.stack+STACKSIZE-1, exit, INIFL);
 	task2.ss = _read_ds();
-	task2.esp = _init_stack(shell, task2.stack+STACKSIZE-1, exit, INIFL);
+	task2.esp = _init_stack(printB, task2.stack+STACKSIZE-1, exit, INIFL);
 	task3.ss = _read_ds();
-	task3.esp = _init_stack(do_nothing, task3.stack+STACKSIZE-1, exit, INIFL);
+	task3.esp = _init_stack(shell, task3.stack+STACKSIZE-1, exit, INIFL);
 	
 	vec[0] = &task1;
 	vec[1] = &task2;
@@ -440,7 +438,7 @@ deleteTask(Task * task)
 	{
 		mt_curr_task->state = TERMINATED;
 		mt_enqueue(mt_curr_task, &terminated_q);
-		scheduler();
+		//scheduler();
 	}
 	else
 	{
@@ -521,7 +519,7 @@ delay(int msecs)
 	}
 	else
 		__ready(mt_curr_task, false);
-	scheduler();
+	//scheduler();
 	RestoreInts();
 }
 
@@ -538,7 +536,7 @@ suspend(Task * task)
 	DisableInts();
 	block(task, SUSPENDED);
 	if ( task == mt_curr_task )
-		scheduler();
+		//scheduler();
 	RestoreInts();
 }
 
@@ -552,7 +550,7 @@ ready(Task * task)
 {
 	DisableInts();
 	__ready(task, false);
-	scheduler();
+	//scheduler();
 	RestoreInts();
 }
 
@@ -593,95 +591,10 @@ setPriority(Task * task, unsigned priority)
 		mt_enqueue(task, queue);
 	}
 	if ( task == mt_curr_task || task->state == READY )
-		scheduler();
+		//scheduler();
 	RestoreInts();
 }
 
-
-/*
---------------------------------------------------------------------------------
-mt_select_task - determina el proximo proceso a ejecutar.
-
-Retorna true si ha cambiado el proceso en ejecucion.
-Llamada desde scheduler() y cuanto retorna una interrupcion de primer nivel.
-Guarda y restaura el contexto del coprocesador y el contexto propio del usuario,
-si existe. 
---------------------------------------------------------------------------------
-*/
-
-bool 
-mt_select_task(void)
-{
-	Task * ready_task;
-
-	/* Ver si el proceso actual puede conservar la CPU */
-	if ( mt_curr_task->state == CURRENT )
-	{
-		if ( mt_curr_task->atomic_level )		/* No molestar */
-			return false;
-
-		/* Analizar prioridades y ranura de tiempo */
-		ready_task = mt_peeklast(&ready_q);
-		if ( !ready_task || ready_task->priority < mt_curr_task->priority ||
-				ticks_to_run && ready_task->priority == mt_curr_task->priority )
-			return false; 
-
-		/* El proceso actual pierde la CPU */
-		__ready(mt_curr_task, false);
-	}
-
-	/* Obtener el proximo proceso */
-	last_task = mt_curr_task;
-	mt_curr_task = mt_getlast(&ready_q);
-	mt_curr_task->state = CURRENT;
-
-	/* Si es el mismo de antes, no hay nada mas que hacer */
-	if ( mt_curr_task == last_task )
-		return false;
-
-	/* Inicializar ranura de tiempo */
-	ticks_to_run = QUANTUM;
-	return true;
-}
-
-/*
---------------------------------------------------------------------------------
-scheduler - selecciona el proximo proceso a ejecutar.
---------------------------------------------------------------------------------
-*/
-
-
-int
-scheduler(void)
-{
-	//mt_select_task();
-	/*int i;
-	for(i = 0; i < 10000; i++)
-			;
-	
-	if( mt_curr_task == &main_task){
-		mt_curr_task = vec[0];
-	} 
-	last_task = mt_curr_task;
-	*/
-
-	if(rand() > 200)
-		mt_curr_task = vec[0];
-	else 
-		mt_curr_task = vec[1];
-	last_task = mt_curr_task;
-
-//	printf("CURR_TASK: %d, LAST TASK: %d\n", mt_curr_task->priority, last_task->priority);
-//	printf("\nESP: %d\n", mt_curr_task->esp);
-	return mt_curr_task->esp;
-}
-
-void
-save_esp(int esp){
-//printf("\nLAST ESP: %d, CURRENT ESP: %d, Arg ESP: %d\n", last_task->esp, mt_curr_task->esp, esp);
-	last_task->esp = esp;
-	return;
-}
 
 /*
 --------------------------------------------------------------------------------
@@ -707,7 +620,7 @@ unatomic(void)
 	if ( mt_curr_task->atomic_level && !--mt_curr_task->atomic_level )
 	{
 		DisableInts();
-		scheduler();
+		//scheduler();
 		RestoreInts();
 	}
 }
@@ -822,7 +735,7 @@ flushQueue(TaskQueue * queue, bool success)
 	{
 		while ( task = mt_getlast(queue) )
 			__ready(task, success);
-		scheduler();
+		//scheduler();
 	}
 	RestoreInts();
 }
