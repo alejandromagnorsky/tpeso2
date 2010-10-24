@@ -19,6 +19,8 @@ struct Task{
 	unsigned	atomic_level;
 	TaskState state;	
 
+	int count;			// La cantidad de veces que tuvo procesador desde que esta despierto
+
 	char * 	stack;
 	int	ss;
 	int	esp;

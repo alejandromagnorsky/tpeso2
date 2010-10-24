@@ -26,4 +26,6 @@ gcc -g -c ../src/programs/reboot.c -o reboot.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/history.c -o history.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/allocator.c -o allocator.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/paging.c -o paging.o -fno-builtin -fno-stack-protector
-ld -T ../src/link.ld kstart.o -o kernel.bin kernel.o queue.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o history.o allocator.o paging.o
+gcc -g -c ../src/lottery.c -o lottery.o -fno-builtin -fno-stack-protector
+gcc -g -c ../src/rand.c -o rand.o -fno-builtin -fno-stack-protector
+ld -T ../src/link.ld kstart.o -o kernel.bin kernel.o queue.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o history.o allocator.o paging.o lottery.o rand.o
