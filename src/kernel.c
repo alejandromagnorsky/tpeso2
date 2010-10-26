@@ -76,21 +76,13 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	paging();
 	//printf("%d\n", *ptr);
 
-	/* inicializar proceso principal */
-	main_task.name = "Main Task";
-	main_task.state = CURRENT;
-	main_task.priority = 0;
-	main_task.send_queue.name = main_task.name;
-	ticks_to_run = QUANTUM;
-	mt_curr_task = &main_task;
-
-
 	static Task task1;
 	static Task task2;
 	static Task task3;
 	static char v1[STACKSIZE];
 	static char v2[STACKSIZE];
 	static char v3[STACKSIZE];
+	static char v4[STACKSIZE];
 
 	task1.priority = 1;
 	task1.stack = v1;
@@ -110,14 +102,25 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	vec[1] = &task2;
 	vec[2] = &task3;
 
+
+	/* inicializar proceso principal */
+	main_task.name = "Main Task";
+	main_task.state = CURRENT;
+	main_task.priority = 0;
+	main_task.stack = v4;	
+	main_task.send_queue.name = main_task.name;
+	main_task.ss = _read_ds();
+	main_task.esp = _init_stack(do_nothing, main_task.stack+STACKSIZE-1, exit, INIFL);
+
+	
+
+	ticks_to_run = QUANTUM;
+	mt_curr_task = &main_task;
+
 	RestoreInts();
 
 	do_nothing();
 
-//	sysinfo();
-//	printf("\n");
-//	__printSystemSymbol();
-//	shell();
 }
 
 void printA(){
