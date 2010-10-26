@@ -1,6 +1,5 @@
 #include "../include/scheduler.h"
-
-extern Task * vec[3];
+#include "../include/rand.h"
 
 void
 save_esp(int esp){
@@ -8,16 +7,46 @@ save_esp(int esp){
 	return;
 }
 
+void __top(TaskQueue * queue ){
+	int iterations = queue->iterations;
+	int i;
+	Task * itr;
+	float top = 0;
+	printf("CPU Resources for queue: %s\n", queue->name);
+	printf("Priority \t CPU% \t Name\n");
+	for ( itr = queue->head ; itr != NULL && queue->tail ; itr = itr->next ){
+		printf("%d \t\t %d \t %s\n",(int)itr->priority, (int)((100*itr->count) / ((float)iterations)), itr->name);
+		top += (100*itr->count) / ((float)iterations);
+	}
+	printf("\t\t_______\n");
+	printf("\t\t %d\n", (int)top);
+}
+
+Task * getNextTaskLottery(TaskQueue * queue){
+	int qty=0;
+	Task * itr;
+	for(itr=queue->head; itr != NULL && queue->tail;itr=itr->next)
+		qty += 4-itr->priority ;
+
+	int ticket = (((float)_rand())/__MAXRAND)*qty;
+
+	int i=0, tmp;
+	for(itr=queue->head; itr != NULL && queue->tail;itr=itr->next)
+		for(tmp=0;tmp<4-itr->priority;tmp++,i++)
+			if(i == ticket){
+				// Este se agrega
+				itr->count++; 
+				queue->iterations++;
+				return itr;
+			}
+}
+
 Task *
 getNextTask(){
 	last_task = mt_curr_task;
-	int n = rand();
-	if(n > 200 && n < 500)
-		mt_curr_task = vec[0];
-	else if( n > 500)
-		mt_curr_task = vec[1];
-	else 
-		mt_curr_task = vec[2];
+	Task * next = getNextTaskLottery(&__taskQueue);
+	if(next != NULL)
+		mt_curr_task = next;
 	return mt_curr_task;
 }
 

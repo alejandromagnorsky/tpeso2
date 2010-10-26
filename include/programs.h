@@ -20,5 +20,8 @@ int reboot(int argc, char * argv[]);
 int history(int argc, char * argv[]);
 
 
+int top(int argc, char * argv[]);
+
+
 #endif
 

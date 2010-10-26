@@ -2,6 +2,36 @@
 
 static TaskQueue time_q;
 
+TaskQueue __taskQueue;
+
+Task __taskArray[__MAX_TASKS];
+
+
+void mt_initTaskQueue( TaskQueue * queue, char * name ){
+	queue->name = name;
+	queue->head = NULL;
+	queue->tail = NULL;
+	queue->iterations = 0;
+}
+
+void mt_initTaskArray( Task tasks[], int size){
+	int i;
+	for(i=0;i<size;i++)
+		tasks[i].exists = 0;
+}
+
+
+Task * mt_getAvailableTask( Task tasks[], int size){
+	int i;
+	for(i=0;i<size;i++)
+		if(tasks[i].exists == 0){
+			tasks[i].exists = 1;
+			return tasks+i;
+		}
+	return NULL;
+}
+
+
 /*
 --------------------------------------------------------------------------------
 mt_enqueue - pone un proceso a esperar en una cola de procesos
