@@ -24,6 +24,8 @@ struct Task{
 	int count;			// La cantidad de veces que tuvo procesador desde que esta despierto
 	int exists;			// Flag de existencia
 
+	int pid;				// Useful for knowing its wrapper process
+
 	char stack[STACKSIZE];
 	int	ss;
 	int	esp;
@@ -54,7 +56,7 @@ typedef void (*TaskFunc)();
 
 
 Task * mt_getAvailableTask( Task tasks[], int size);
-Task *		createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority);
+Task *		createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority, int pid);
 Task *		currentTask(void);
 void		deleteTask(Task * task);
 

@@ -4,10 +4,17 @@
 #include "../include/interrupts.h"
 #include "../include/shell.h"
 #include "../include/multiboot.h"
+#include "../include/process.h"
 
 void __printMemoryMap(multiboot_info_t * mbd);
 void printA();
 void printB();
+
+void __fork(TaskFunc f);
+
+
+
+void init();
 
 // INCLUDE TEMPORAL
 // extern char page_map[];
@@ -64,7 +71,6 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 
 	// Habilito interrupcion del timer tick y del teclado
 	_mascaraPIC1(0xFC);
-
 	_mascaraPIC2(0xFF);
 	
 
@@ -75,19 +81,12 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	paging();
 	//printf("%d\n", *ptr);
 
-	// Inicializar queues
+	// Inicializar multitasker queues
 	mt_initTaskArray( __taskArray, __MAX_TASKS);
 	mt_initTaskQueue( &__taskQueue, "TPE SO2 Queue");
 
-	// Creo los tasks
-	Task * task1 = createTask(printA, (unsigned)STACKSIZE, "Task1", 1);
-	Task * task2 = createTask(printB, (unsigned)STACKSIZE, "Task2", 2);
-	Task * task3 = createTask(shell, (unsigned)STACKSIZE, "Task3", 0);
-
-	// Y los agrego a la cola
-	mt_enqueue(task1, &__taskQueue);
-	mt_enqueue(task2, &__taskQueue);
-	mt_enqueue(task3, &__taskQueue);
+	// Inicializar procesos e init (aca esta el fork inicial)
+	__initializeProcessSubSystem();
 
 	// Para ver la cola...
 	Task * itr;
@@ -103,7 +102,6 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	main_task.ss = _read_ds();
 	main_task.esp = _init_stack(do_nothing, main_task.stack+STACKSIZE-1, exit, INIFL);
 
-	
 
 	ticks_to_run = QUANTUM;
 	mt_curr_task = &main_task;
@@ -113,6 +111,12 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	do_nothing();
 
 }
+
+void do_nothing(){ 
+	while(true)
+		;
+}
+
 
 void printA(){
 	long j = 0;
@@ -350,13 +354,14 @@ __ready(Task * task, bool success)
 
 
 Task *
-createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority)
+createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority, int pid)
 {
 	//Task * task;
 	Task * task = mt_getAvailableTask( __taskArray, __MAX_TASKS);
 	task->priority = priority;
 	task->name = name;
 	task->count = 0;
+	task->pid = pid;
 	//task->send_queue.name = StrDup(name);
 
 	task->ss = _read_ds();
@@ -715,11 +720,6 @@ flushQueue(TaskQueue * queue, bool success)
 		//scheduler();
 	}
 	RestoreInts();
-}
-
-void do_nothing(){ 
-	while(true)
-		;
 }
 
 
