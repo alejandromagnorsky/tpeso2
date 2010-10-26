@@ -3,6 +3,8 @@
 
 #include "../include/defs.h"
 
+#define STACKSIZE 		4096
+
 typedef enum {SUSPENDED, READY, CURRENT, DELAYING, WAITING, SENDING, RECEIVING, TERMINATED} TaskState;
 typedef struct Task Task;
 
@@ -10,7 +12,7 @@ typedef struct{
 	char *	name;
 	Task *	head;
 	Task *	tail;
-
+	int iterations;
 } TaskQueue;
 
 struct Task{
@@ -20,8 +22,9 @@ struct Task{
 	TaskState state;	
 
 	int count;			// La cantidad de veces que tuvo procesador desde que esta despierto
+	int exists;			// Flag de existencia
 
-	char * 	stack;
+	char stack[STACKSIZE];
 	int	ss;
 	int	esp;
 	
@@ -49,6 +52,8 @@ struct Task{
 // Puntero a la funcion a ejecutar al iniciar el proceso
 typedef void (*TaskFunc)();
 
+
+Task * mt_getAvailableTask( Task tasks[], int size);
 Task *		createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority);
 Task *		currentTask(void);
 void		deleteTask(Task * task);

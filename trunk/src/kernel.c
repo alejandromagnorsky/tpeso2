@@ -15,7 +15,6 @@ void printB();
 
 DESCR_INT idt[0x81];	/* IDT de 81h entradas*/
 IDTR idtr;				/* IDTR */
-Task * vec[3];
 
 
 int getSeconds(){
@@ -76,38 +75,30 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	paging();
 	//printf("%d\n", *ptr);
 
-	static Task task1;
-	static Task task2;
-	static Task task3;
-	static char v1[STACKSIZE];
-	static char v2[STACKSIZE];
-	static char v3[STACKSIZE];
-	static char v4[STACKSIZE];
+	// Inicializar queues
+	mt_initTaskArray( __taskArray, __MAX_TASKS);
+	mt_initTaskQueue( &__taskQueue, "TPE SO2 Queue");
 
-	task1.priority = 1;
-	task1.stack = v1;
-	task2.priority = 2;
-	task2.stack = v2;
-	task3.priority = 0;
-	task3.stack = v3;
-	
-	task1.ss = _read_ds();
-	task1.esp = _init_stack(printA, task1.stack+STACKSIZE-1, exit, INIFL);
-	task2.ss = _read_ds();
-	task2.esp = _init_stack(printB, task2.stack+STACKSIZE-1, exit, INIFL);
-	task3.ss = _read_ds();
-	task3.esp = _init_stack(shell, task3.stack+STACKSIZE-1, exit, INIFL);
-	
-	vec[0] = &task1;
-	vec[1] = &task2;
-	vec[2] = &task3;
+	// Creo los tasks
+	Task * task1 = createTask(printA, (unsigned)STACKSIZE, "Task1", 1);
+	Task * task2 = createTask(printB, (unsigned)STACKSIZE, "Task2", 2);
+	Task * task3 = createTask(shell, (unsigned)STACKSIZE, "Task3", 0);
+
+	// Y los agrego a la cola
+	mt_enqueue(task1, &__taskQueue);
+	mt_enqueue(task2, &__taskQueue);
+	mt_enqueue(task3, &__taskQueue);
+
+	// Para ver la cola...
+	Task * itr;
+	for(itr=__taskQueue.head; itr != NULL && __taskQueue.tail;itr=itr->next)
+		printf("Elemento %s\n",itr->name);
 
 
-	/* inicializar proceso principal */
+	/* Inicializar proceso principal */
 	main_task.name = "Main Task";
 	main_task.state = CURRENT;
 	main_task.priority = 0;
-	main_task.stack = v4;	
 	main_task.send_queue.name = main_task.name;
 	main_task.ss = _read_ds();
 	main_task.esp = _init_stack(do_nothing, main_task.stack+STACKSIZE-1, exit, INIFL);
@@ -126,9 +117,9 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 void printA(){
 	long j = 0;
 	while(true){
-		j++;
-		if(j % 50000 == 0)
-			printf("%d-", j);
+	//	j++;
+	//	if(j % 50000 == 0)
+	//		printf("%d-", j);
 		//printf("A");
 	}
 }
@@ -136,10 +127,10 @@ void printA(){
 void printB(){
 	int i = 0;
 	while(true){
-		i++;
-		if(i % 1000 == 0)
-			printf("%d", i);			
-		printf("_");
+	//	i++;
+	//	if(i % 1000 == 0)
+	//		printf("%d", i);			
+	//	printf("_");
 	}
 }
 
@@ -362,33 +353,16 @@ Task *
 createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority)
 {
 	//Task * task;
-	Task task;
-	static char v1[500];
-	static char v2[500];
+	Task * task = mt_getAvailableTask( __taskArray, __MAX_TASKS);
+	task->priority = priority;
+	task->name = name;
+	task->count = 0;
+	//task->send_queue.name = StrDup(name);
 
-	/* ajustar tamano del stack y redondear a numero par */
-	//stacksize = even(stacksize + mt_reserved_stack);
+	task->ss = _read_ds();
+	task->esp = _init_stack(func, task->stack+stacksize-1, exit, INIFL);
 
-
-	/* alocar estructura del proceso */
-	//task = Malloc(sizeof(Task));
-
-	//task->name = task->send_queue.name = StrDup(name);
-    	//task->priority = priority;
-	task.priority = priority;
-	//task->stack = Malloc(stacksize);
-	if(priority == 1)
-		task.stack = v1;
-	else
-		task.stack = v2;
-
-	/* inicializar stack */
-	
-	task.ss = _read_ds();
-	task.esp = _init_stack(func, task.stack+STACKSIZE-1, exit, INIFL);
-
-//	return task;
-	return NULL;
+	return task;
 }
 
 

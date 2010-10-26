@@ -196,6 +196,8 @@ void shell(){
 	sysinfo();
 	printf("\n");
 	__printSystemSymbol();
+
+	printf("Che, hagan 'top'\n");
 	
 	__QTY_PROGRAMS = 0;
 	__init_history();
@@ -214,6 +216,7 @@ void shell(){
 	__register_program("bingo", bingo);
 	__register_program("reboot", reboot);
 	__register_program("history", history);
+	__register_program("top", top);
 
 	__register_man_page("echo","Prints the string received.");
 	__register_man_page("clear", "Clears the screen.");
@@ -234,6 +237,7 @@ void shell(){
 	__register_man_page("bingo","Bingo for two players.");
 	__register_man_page("reboot","Reboots the system.");
 	__register_man_page("history","Shows the shell history.");
+	__register_man_page("top","Shows CPU resources.");
 	
 
 	// Data for user input
