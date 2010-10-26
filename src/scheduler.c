@@ -29,7 +29,6 @@ Task * getNextTaskLottery(TaskQueue * queue){
 		qty += 4-itr->priority ;
 
 	int ticket = (((float)_rand())/__MAXRAND)*qty;
-
 	int i=0, tmp;
 	for(itr=queue->head; itr != NULL && queue->tail;itr=itr->next)
 		for(tmp=0;tmp<4-itr->priority;tmp++,i++)
@@ -45,6 +44,12 @@ Task *
 getNextTask(){
 	last_task = mt_curr_task;
 	Task * next = getNextTaskLottery(&__taskQueue);
+	/* Para ver el yield
+	Task * next;
+	if(rand()>200) 
+		next = __taskQueue.head->next;
+	else
+		next = __taskQueue.head->next->next;*/
 	if(next != NULL)
 		mt_curr_task = next;
 	return mt_curr_task;
