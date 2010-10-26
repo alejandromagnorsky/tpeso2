@@ -190,6 +190,12 @@ void __getShellArguments(char * ans){
 	printf("\n");
 }
 
+int openShell(int argc, char * argv[]){
+	__forkAndExec(shell, "shell");
+
+	// And put this to sleep
+	while(1);
+}
 
 void shell(){
 
@@ -198,6 +204,7 @@ void shell(){
 	__printSystemSymbol();
 
 	printf("Che, hagan 'top' y 'pstree'. El tema del fork y exec esta un poco cableado por ahora pero parece andar.\n");
+	printf("Tambien, para probar como funciona el arbol, usen el comando 'shell'\n");
 	__printSystemSymbol();
 	
 	__QTY_PROGRAMS = 0;
@@ -219,6 +226,7 @@ void shell(){
 	__register_program("history", history);
 	__register_program("top", top);
 	__register_program("pstree", pstree);
+	__register_program("shell", openShell);
 
 	__register_man_page("echo","Prints the string received.");
 	__register_man_page("clear", "Clears the screen.");
@@ -241,6 +249,7 @@ void shell(){
 	__register_man_page("history","Shows the shell history.");
 	__register_man_page("top","Shows CPU resources.");
 	__register_man_page("pstree","Shows process tree.");
+	__register_man_page("shell","Opens a new shell.");
 	
 
 	// Data for user input
