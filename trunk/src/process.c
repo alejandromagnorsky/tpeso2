@@ -181,11 +181,11 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs ){
 	int i;
 	for(i=0;i<tabs;i++)
 		if(i)
-			printf("|\t");
-		else printf(" \t");
+			printf(" |\t\t");
+		else printf(" \t\t");
 	
 	if(tabs)
-		printf("   |-");
+		printf(" |-");
 
 	__printProcessData(p);
 	printf("(%d)", p->pid);
@@ -198,7 +198,7 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs ){
 			// Print it nicely
 			if(!hasChilds){
 				hasChilds = 1;
-				printf(" -|\n");
+				printf("\t|\n");
 			}
 
 		__printProcessTreeTabs(p->childs[i], tabs+1);
