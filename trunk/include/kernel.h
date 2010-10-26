@@ -19,7 +19,7 @@
 
 #define NULL_STACK		256 			/* tamano de stack para proceso nulo */ 
 #define INIFL			0x200
-#define STACKSIZE 		512
+#define STACKSIZE 		4096
 #define QUANTUM			2
 #define MSPERTICK 		55
 #define	DisableInts()	__asm__ ( "cli" )

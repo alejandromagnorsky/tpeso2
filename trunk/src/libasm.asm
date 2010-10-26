@@ -89,8 +89,8 @@ EXTERN	int_1E
 EXTERN	int_1F
 EXTERN  int_20
 EXTERN  int_21
-EXTERN 	scheduler
 EXTERN 	getNextTask
+EXTERN 	get_temp_esp
 EXTERN 	load_esp
 EXTERN 	save_esp
 EXTERN __write
@@ -522,20 +522,23 @@ _int_20_hand:				; Handler de INT 20h (Timer tick)
 	cli
 	pushad
 
-	;call    int_20                
-	
-	mov 	eax, esp
-	push 	eax
-	call	save_esp
+	mov 	eax, esp		
+	push 	eax			
+	call	save_esp		; Guarda la posicion actual del esp en la tarea actual
 	pop 	eax
 
-	call 	getNextTask
+	;call    int_20           	
+	
+	call	get_temp_esp	
+	mov		esp, eax		; Cambia al stack del main task para realizar ahi las operaciones del scheduler
+	
+	call 	getNextTask		; Obtiene la siguiente tarea segun el algoritmo de scheduler
 	push 	eax
-	call 	load_esp	
+	call 	load_esp		; Devuelve el esp de la nueva tarea
 	pop		ebx
-	mov		esp, eax	; Cambia el stack
+	mov		esp, eax		; Cambia el stack
 
-	mov	al, 20h			; Envio de EOI generico al PIC
+	mov	al, 20h				; Envio de EOI generico al PIC
 	out	20h, al
 
 	popad                    		

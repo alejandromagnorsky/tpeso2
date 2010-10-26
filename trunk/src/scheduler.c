@@ -27,6 +27,10 @@ load_esp(Task * task){
 	return task->esp;
 }
 
+int
+get_temp_esp(){
+	return main_task.esp;
+}
 
 
 /*
