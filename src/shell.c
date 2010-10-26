@@ -197,7 +197,8 @@ void shell(){
 	printf("\n");
 	__printSystemSymbol();
 
-	printf("Che, hagan 'top'\n");
+	printf("Che, hagan 'top' y 'pstree'. El tema del fork y exec esta un poco cableado por ahora pero parece andar.\n");
+	__printSystemSymbol();
 	
 	__QTY_PROGRAMS = 0;
 	__init_history();
@@ -217,6 +218,7 @@ void shell(){
 	__register_program("reboot", reboot);
 	__register_program("history", history);
 	__register_program("top", top);
+	__register_program("pstree", pstree);
 
 	__register_man_page("echo","Prints the string received.");
 	__register_man_page("clear", "Clears the screen.");
@@ -238,6 +240,7 @@ void shell(){
 	__register_man_page("reboot","Reboots the system.");
 	__register_man_page("history","Shows the shell history.");
 	__register_man_page("top","Shows CPU resources.");
+	__register_man_page("pstree","Shows process tree.");
 	
 
 	// Data for user input

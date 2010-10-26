@@ -1,6 +1,6 @@
-#include "process.h"
-
-#include <stdio.h>
+#include "../include/process.h"
+#include "../include/kernel.h"
+#include "../include/shell.h"
 
 /*  Definition of process context storage.
 	A process data structure is invalid
@@ -17,6 +17,15 @@ __ProcessNode __processTreeData[__PID_MAX];
 // The process tree.
 __ProcessNode * __processTree;
 
+
+void __initializeProcessSubSystem(){
+	// Initialization
+	__initializeProcessData();
+
+	__initializeProcessTreeData();
+
+	__initializeProcessTree();
+}
 
 void __initializeProcessData(){
 	__ProcessData nullData;
@@ -45,6 +54,29 @@ void __initializeProcessTreeData(){
 
 void __initializeProcessTree(){
 	__processTree = __processTreeData;
+
+	__processTree->data = __processes;
+	__processTree->data->exists = 1;
+	__processTree->data->task = createTask(init, (unsigned)STACKSIZE, "init", 0, 0);
+
+	// Y los agrego a la cola
+	mt_enqueue(__processTree->data->task, &__taskQueue);
+}
+
+void init(){
+
+	// El problema aca es que cuadno haces init stack empieza desde 0, 
+	// entonces habria un ciclo infinito. Hay que arreglar eso.
+
+	printf("Init started. Calling shell...\n");
+	int shellPID = __forkAndExec(shell, "shell");
+
+	printf("Shell PID: %d\n", shellPID);
+
+	__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
+	shellProc->data->task->priority = 1;
+
+	while(true);
 }
 
 __ProcessNode * getAvailableProcessNode(){
@@ -113,7 +145,7 @@ void __waitProcess( __ProcessNode * parent){
 			}
 }
 
-void __forkProcess( __ProcessNode * p){
+int __forkProcess( __ProcessNode * p){
 
 	// Get resources
 	__ProcessData * data = getAvailableProcessData();
@@ -130,14 +162,14 @@ void __forkProcess( __ProcessNode * p){
 	for(i=0;i<__MAX_CHILDS;i++)
 		if(p->childs[i] == NULL){
 			p->childs[i] = child;
-			return;
+			return p->childs[i]->pid;
 		}
 }
 
 void __printProcessData( __ProcessNode * p ){
-	if(p->data->exists)
-		printf("T:%d", p->data->test);
-	else printf("Dead");
+		if(p->data->exists)
+			printf("%s", p->data->task->name);
+		else printf("Dead");
 }
 
 
@@ -149,12 +181,14 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs ){
 	int i;
 	for(i=0;i<tabs;i++)
 		if(i)
-			printf("│\t");
+			printf("|\t");
 		else printf(" \t");
 	
 	if(tabs)
-		printf("├PID: %d ", p->pid);
-	else	printf(" PID: %d ", p->pid);
+		printf("   |-");
+
+	__printProcessData(p);
+	printf("(%d)", p->pid);
 
 	int hasChilds = 0;
 
@@ -164,22 +198,38 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs ){
 			// Print it nicely
 			if(!hasChilds){
 				hasChilds = 1;
-				printf("\u2510 ");
-				__printProcessData(p);
-				printf("\n");
+				printf(" -|\n");
 			}
 
 		__printProcessTreeTabs(p->childs[i], tabs+1);
 	}
 
 	if(!hasChilds) {
-		__printProcessData(p);
 		printf("\n");
 	}
 }
 
 
 
+// TEST !!!
+int __forkAndExec(TaskFunc f, char * name){
+	__ProcessNode * p = __getProcessNodeByPID(mt_curr_task->pid);
+
+	int childPID = __forkProcess(p);
+
+	printf("Child PID:%d\n", childPID);
+
+	// Create child task
+	__ProcessNode * child = __getProcessNodeByPID(childPID);
+	child->data->task = createTask(f, (unsigned)STACKSIZE, name, p->data->task->priority, childPID);
+
+	// Add it to queue
+	mt_enqueue(child->data->task, &__taskQueue);
+
+	return childPID;
+}
+
+/*
 int main(){
 
 
@@ -230,4 +280,4 @@ int main(){
 	__printProcessTree(__processTree);
 
 
-}
+}*/
