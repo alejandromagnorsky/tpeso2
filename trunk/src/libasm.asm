@@ -49,6 +49,7 @@ GLOBAL  _int_1F_hand
 GLOBAL  _int_20_hand
 GLOBAL  _int_21_hand
 GLOBAL  _int_80_hand
+GLOBAL  _int_20_call
 GLOBAL  _int_80_call
 GLOBAL	_inport
 GLOBAL  _outport
@@ -516,6 +517,18 @@ _int_1F_hand:
 	call	int_1F
        	
         iret
+
+_int_20_call:
+	push ebp
+	mov ebp, esp
+	
+	mov eax, [ebp+8]
+
+	int 20h
+
+	leave
+	ret
+
 
 
 _int_20_hand:				; Handler de INT 20h (Timer tick)

@@ -48,6 +48,8 @@ size_t __write(int fd, const void* buffer, size_t count){
 }
 
 
+void func(int a);
+
 /**********************************************
 kmain() 
 Punto de entrada de C
@@ -88,6 +90,13 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	// Inicializar procesos e init (aca esta el fork inicial)
 	__initializeProcessSubSystem();
 
+	/* Para ver el yield
+	Task * t1 = createTask(printA, (unsigned)STACKSIZE, "printA", 1, 10);
+	Task * t2 = createTask(printB, (unsigned)STACKSIZE, "printB", 1, 10);
+	mt_enqueue(t1, &__taskQueue);
+	mt_enqueue(t2, &__taskQueue);
+	*/
+
 	// Para ver la cola...
 	Task * itr;
 	for(itr=__taskQueue.head; itr != NULL && __taskQueue.tail;itr=itr->next)
@@ -121,9 +130,13 @@ void do_nothing(){
 void printA(){
 	long j = 0;
 	while(true){
-	//	j++;
-	//	if(j % 50000 == 0)
-	//		printf("%d-", j);
+		j++;
+		if(j % 50000 == 0)
+			printf("%d-", j);
+		if(j % 100000 == 0){
+			printf("Yield\n");
+			yield();
+		}
 		//printf("A");
 	}
 }
@@ -131,10 +144,10 @@ void printA(){
 void printB(){
 	int i = 0;
 	while(true){
-	//	i++;
-	//	if(i % 1000 == 0)
-	//		printf("%d", i);			
-	//	printf("_");
+		i++;
+		if(i % 1000 == 0)
+			printf("%d", i);			
+		printf("_");
 	}
 }
 
@@ -346,7 +359,7 @@ __ready(Task * task, bool success)
 
 	mt_dequeue(task);
 	mt_dequeue_time(task);
-	mt_enqueue(task, &ready_q);
+	mt_enqueue(task, &__taskQueue);
 	task->success = success;
 	task->state = READY;
 }
@@ -532,7 +545,7 @@ ready(Task * task)
 {
 	DisableInts();
 	__ready(task, false);
-	//scheduler();
+	_int_20_call(0);
 	RestoreInts();
 }
 

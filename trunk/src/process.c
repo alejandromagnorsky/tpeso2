@@ -45,7 +45,7 @@ void __initializeProcessTreeData(){
 
 	int i,j;
 	for(i=0;i<__PID_MAX;i++){
-		__processTreeData[i] = nullNode;
+		__processTreeData[i].data = NULL;
 		__processTreeData[i].pid = i;
 		for(j=0;j<__MAX_CHILDS;j++)
 			__processTreeData[i].childs[j] = NULL;
