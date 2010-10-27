@@ -2,8 +2,8 @@
 
 unsigned long __Seed = __NOSEED;
 
-#define __Multiplier ((unsigned)1103515245)
-#define __Increment ((unsigned)12345)
+#define __Multiplier 1103515245
+#define __Increment 12345
 
 int __randCounter = 0;
 unsigned __Xn = 1;

@@ -27,8 +27,8 @@ Task * getNextTaskLottery(TaskQueue * queue){
 	for(itr=queue->head; itr != NULL && queue->tail;itr=itr->next)
 		qty += 4-itr->priority ;
 
-	int ticket = (((float)_rand())/__MAXRAND)*qty;
-	//printf("Qty: %d, Ticket: %d, rand: %d\n", qty, ticket, _rand());
+	int ticket = ((int)(((float)_rand())/((float)__MAXRAND)))*qty;
+	printf("Qty: %d, Ticket: %d, rand: %d\n", qty, ticket, _rand());
 	int i=0, tmp;
 	for(itr=queue->head; itr != NULL && queue->tail;itr=itr->next)
 		for(tmp=0;tmp<4-itr->priority;tmp++,i++)
