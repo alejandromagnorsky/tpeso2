@@ -94,7 +94,7 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 
 	/* Para ver el yield*/
 	Task * t1 = createTask(printA, (unsigned)STACKSIZE, "printA", 1, 10);
-	Task * t2 = createTask(printB, (unsigned)STACKSIZE, "printB", 1, 10);
+	Task * t2 = createTask(printB, (unsigned)STACKSIZE, "printB", 1, 9);
 	mt_enqueue(t1, &ready_q);
 	mt_enqueue(t2, &ready_q);
 	
