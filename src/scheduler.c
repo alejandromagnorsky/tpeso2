@@ -9,7 +9,6 @@ save_esp(int esp){
 
 void __top(TaskQueue * queue ){
 	int iterations = queue->iterations;
-	int i;
 	Task * itr;
 	float top = 0;
 	printf("CPU Resources for queue: %s\n", queue->name);
@@ -38,6 +37,7 @@ Task * getNextTaskLottery(TaskQueue * queue){
 				queue->iterations++;
 				return itr;
 			}
+	return NULL;
 }
 
 Task *

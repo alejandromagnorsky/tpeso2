@@ -5,6 +5,8 @@
 #include "../include/shell.h"
 #include "../include/multiboot.h"
 #include "../include/process.h"
+#include "../include/console.h"
+#include "../include/console.h"
 
 void __printMemoryMap(multiboot_info_t * mbd);
 void printA();
@@ -56,7 +58,7 @@ Punto de entrada de C
 *************************************************/
 
 /* 'multiboot_info_t' stores data about memory map */
-kmain(multiboot_info_t * mbd, unsigned int magic) 
+int kmain(multiboot_info_t * mbd, unsigned int magic) 
 {
 	DisableInts();
 
@@ -88,7 +90,7 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	mt_initTaskQueue( &ready_q, "TPE SO2 Queue");
 
 	// Inicializar procesos e init (aca esta el fork inicial)
-	__initializeProcessSubSystem();
+//	__initializeProcessSubSystem();
 
 	/* Para ver el yield*/
 	Task * t1 = createTask(printA, (unsigned)STACKSIZE, "printA", 1, 10);
@@ -101,6 +103,8 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 	Task * itr;
 	for(itr=ready_q.head; itr != NULL && ready_q.tail;itr=itr->next)
 		printf("Elemento %s\n",itr->name);
+
+	printf("\nDeberia decir Elemento printB Elemento printA\n");
 
 
 	/* Inicializar proceso principal */
@@ -119,6 +123,7 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 
 	do_nothing();
 
+	return 0;
 }
 
 void do_nothing(){ 
@@ -128,7 +133,7 @@ void do_nothing(){
 
 
 void printA(){
-	long j = 0;
+//	long j = 0;
 	while(true){
 	/*	j++;
 		if(j % 50000 == 0)
@@ -142,7 +147,7 @@ void printA(){
 }
 
 void printB(){
-	int i = 0;
+	//int i = 0;
 	while(true){
 		/*i++;
 		if(i % 1000 == 0)
@@ -454,7 +459,7 @@ free_terminated(void)
 {
 	Task * task;
 
-	while ( task = mt_getlast(&terminated_q) )
+	while ( (task = mt_getlast(&terminated_q)) )
 		free_task(task);
 }
 
@@ -580,7 +585,7 @@ setPriority(Task * task, unsigned priority)
 
 	DisableInts();
 	task->priority = priority;
-	if ( queue = task->queue )
+	if ( (queue = task->queue) )
 	{
 		mt_dequeue(task);
 		mt_enqueue(task, queue);
@@ -728,7 +733,7 @@ flushQueue(TaskQueue * queue, bool success)
 	DisableInts();
 	if ( mt_peeklast(queue) )
 	{
-		while ( task = mt_getlast(queue) )
+		while ( (task = mt_getlast(queue)) )
 			__ready(task, success);
 		//scheduler();
 	}

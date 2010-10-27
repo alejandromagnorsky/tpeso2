@@ -39,12 +39,12 @@ typedef struct{
 
 
 // Console buffers
-__terminal __tty[__MAX_TERMINALS];
+extern __terminal __tty[__MAX_TERMINALS];
 
 // Index of visible console
-int __TTY_INDEX = 0;
+extern int __TTY_INDEX;
 
-char __SYSTEM_SYMBOL[__MAX_SS] = "tty";
+extern char __SYSTEM_SYMBOL[__MAX_SS];
 
 
 void __shift_terminal_cursor(int direction, int qty);
