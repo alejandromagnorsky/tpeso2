@@ -193,7 +193,6 @@ void __getShellArguments(char * ans){
 int openShell(int argc, char * argv[]){
 	__forkAndExec(shell, "shell");
 
-
 	__waitProcess(__getProcessNodeByPID(mt_curr_task->pid));
 	return 0;
 }
