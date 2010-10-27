@@ -1,5 +1,5 @@
 #include "../../include/scheduler.h"
 
 int top(int argc, char * argv[]){
-	__top(&__taskQueue);
+	__top(&ready_q);
 }

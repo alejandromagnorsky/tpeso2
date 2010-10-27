@@ -60,7 +60,7 @@ void __initializeProcessTree(){
 	__processTree->data->task = createTask(init, (unsigned)STACKSIZE, "init", 0, 0);
 
 	// Y los agrego a la cola
-	mt_enqueue(__processTree->data->task, &__taskQueue);
+	mt_enqueue(__processTree->data->task, &ready_q);
 }
 
 void init(){
@@ -224,7 +224,7 @@ int __forkAndExec(TaskFunc f, char * name){
 	child->data->task = createTask(f, (unsigned)STACKSIZE, name, p->data->task->priority, childPID);
 
 	// Add it to queue
-	mt_enqueue(child->data->task, &__taskQueue);
+	mt_enqueue(child->data->task, &ready_q);
 
 	return childPID;
 }

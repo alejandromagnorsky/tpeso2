@@ -43,7 +43,7 @@ Task * getNextTaskLottery(TaskQueue * queue){
 Task *
 getNextTask(){
 	last_task = mt_curr_task;
-	Task * next = getNextTaskLottery(&__taskQueue);
+	Task * next = getNextTaskLottery(&ready_q);
 	/* Para ver el yield
 	Task * next;
 	if(rand()>200) 
