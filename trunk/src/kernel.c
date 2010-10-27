@@ -92,7 +92,7 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	mt_initTaskQueue( &ready_q, "TPE SO2 Queue");
 
 	// Inicializar procesos e init (aca esta el fork inicial)
-	__initializeProcessSubSystem();
+	//__initializeProcessSubSystem();
 
 	/* Para ver el yield*/
 	Task * t1 = createTask(printA, (unsigned)STACKSIZE, "printA", 1, 10);
