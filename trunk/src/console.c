@@ -1,6 +1,14 @@
 #include "../include/console.h"
 #include "../include/shell.h"
 
+// Console buffers
+__terminal __tty[__MAX_TERMINALS];
+
+// Index of visible console
+int __TTY_INDEX = 0;
+
+char __SYSTEM_SYMBOL[__MAX_SS] = "tty";
+
 void __INIT_TTY(){
 
 	__register_special_ascii(__BLOCK_ASCII, ' ');

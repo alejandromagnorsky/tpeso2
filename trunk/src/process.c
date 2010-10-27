@@ -164,6 +164,7 @@ int __forkProcess( __ProcessNode * p){
 			p->childs[i] = child;
 			return p->childs[i]->pid;
 		}
+	return 0;
 }
 
 void __printProcessData( __ProcessNode * p ){
