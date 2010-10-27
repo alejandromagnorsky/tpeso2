@@ -70,14 +70,18 @@ void init(){
 	// entonces habria un ciclo infinito. Hay que arreglar eso.
 
 	printf("Init started. Calling shell...\n");
-	int shellPID = __forkAndExec(shell, "shell");
 
-	printf("Shell PID: %d\n", shellPID);
+	while(true){
+		int shellPID = __forkAndExec(shell, "shell");
 
-	__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
-	shellProc->data->task->priority = 1;
+		printf("Shell PID: %d\n", shellPID);
 
-	while(true);
+		__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
+		shellProc->data->task->priority = 1;
+
+		__waitProcess(__getProcessNodeByPID(mt_curr_task->pid));
+		printf("Me mataste la consola!!!! Ahora te tiro otra\n");
+	}
 }
 
 __ProcessNode * getAvailableProcessNode(){
