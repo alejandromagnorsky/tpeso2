@@ -224,7 +224,10 @@ int __forkProcess( __ProcessNode * p){
 	
 	// Construct child
 	child->data = data;
-
+	//child->data->task = createTask(do_nothing, (unsigned)STACKSIZE, "Child", 2, 5);
+	//int aux = _copy_stack(child->data->task->stack, p->data->task->stack, STACKSIZE);
+	//child->data->task->esp = aux;
+	
 	int i;
 	for(i=0;i<__MAX_CHILDS;i++)
 		if(p->childs[i] == NULL){
@@ -287,13 +290,15 @@ int __forkAndExec(TaskFunc f, char * name){
 
 	printf("Child PID:%d\n", childPID);
 
-	// Create child task
+	// Create child taskda
 	__ProcessNode * child = __getProcessNodeByPID(childPID);
+	
+	//printf("STACK CHILD %d, STACK PARENT %d, ESP: %d, PRIO: %d", child->data->task->stack, p->data->task->stack, child->data->task->esp, child->data->task->priority);
 	child->data->task = createTask(f, (unsigned)STACKSIZE, name, p->data->task->priority, childPID);
-
+	
 	// Add it to queue
 	mt_enqueue(child->data->task, &ready_q);
-
+	
 	return childPID;
 }
 

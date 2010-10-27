@@ -51,6 +51,8 @@ GLOBAL  _int_21_hand
 GLOBAL  _int_80_hand
 GLOBAL  _int_20_call
 GLOBAL  _int_80_call
+GLOBAL  _copy_stack
+GLOBAL  _int_7F_hand
 GLOBAL	_inport
 GLOBAL  _outport
 GLOBAL  _mascaraPIC1,_mascaraPIC2,_Cli,_Sti
@@ -94,6 +96,7 @@ EXTERN 	getNextTask
 EXTERN 	get_temp_esp
 EXTERN 	load_esp
 EXTERN 	save_esp
+EXTERN  memcpy
 EXTERN __write
 EXTERN __read
 EXTERN getAscii
@@ -579,6 +582,53 @@ _int_21_hand:				; Handler de INT 21h (Teclado)
         pop     ds
 	sti        
 	iret
+
+
+_copy_stack:
+	push ebp
+	mov ebp, esp
+	
+	mov ebx, [ebp+8]
+	mov ecx, [ebp+12]	
+	mov edx, [ebp+16]
+
+	int 7Fh
+
+	leave
+	ret
+
+_int_7F_hand:
+	cli
+
+	push edx	; Pusheo length
+	push ecx	; Pusheo src
+	push ebx	; Pusheo out
+
+	call memcpy
+
+	pop 	ebx		; Pop de out
+	pop		ecx		; Pop de src
+	pop		eax		; Pop de length
+	
+	mov	al, 20h			; Envio de EOI generico al PIC
+	out	20h, al
+
+	mov		eax, esp
+	sub		eax, ecx ; Obtiene el tamaño de la copia al restar esp-src
+	add		eax, ebx ; eax ahora contiene el child->esp
+
+	mov		ebx, esp ; Guardo el stack del padre
+	mov 	esp, eax ; Me muevo al stack del hijo
+	pushad			 ; Pusheo los registros
+	mov		ecx, esp ; Guardo en ecx el child->esp
+	mov		eax, ebx 
+	mov		esp, eax ; Vuelvo al stack del padre
+	mov 	eax, ecx ; Copio en eax el child->esp	
+
+	sti	
+	iret
+	
+
 
 _int_80_call:
 	push ebp
