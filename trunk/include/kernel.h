@@ -71,6 +71,7 @@ Task main_task;				/* proceso principal */
 int ticks_to_run;			/* ranura de tiempo */
 TaskQueue ready_q;			/* cola de procesos ready */
 TaskQueue terminated_q;		/* cola de procesos terminados */
+TaskQueue blocked_q;		/* cola de procesos bloqueados */
 
 void block(Task * task, TaskState state);
 void __ready(Task * task, bool success);

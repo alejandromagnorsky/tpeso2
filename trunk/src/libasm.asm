@@ -599,9 +599,9 @@ _int_80_hand:
 	push ebp
 	mov ebp, esp
 
-	push dword ebx	; Pushea los parámetros de read y write
+	push dword edx	; Pushea los parámetros de read y write
 	push dword ecx
-	push dword edx
+	push dword ebx
 
 	cmp	eax, 0
 	je	read
