@@ -5,7 +5,6 @@
 #define __MAX_TASKS 500
 
 
-extern TaskQueue __taskQueue;
 extern Task __taskArray[__MAX_TASKS];
 
 

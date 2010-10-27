@@ -2,8 +2,6 @@
 
 static TaskQueue time_q;
 
-TaskQueue __taskQueue;
-
 Task __taskArray[__MAX_TASKS];
 
 

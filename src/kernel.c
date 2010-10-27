@@ -85,21 +85,21 @@ kmain(multiboot_info_t * mbd, unsigned int magic)
 
 	// Inicializar multitasker queues
 	mt_initTaskArray( __taskArray, __MAX_TASKS);
-	mt_initTaskQueue( &__taskQueue, "TPE SO2 Queue");
+	mt_initTaskQueue( &ready_q, "TPE SO2 Queue");
 
 	// Inicializar procesos e init (aca esta el fork inicial)
 	__initializeProcessSubSystem();
 
-	/* Para ver el yield
+	/* Para ver el yield*/
 	Task * t1 = createTask(printA, (unsigned)STACKSIZE, "printA", 1, 10);
 	Task * t2 = createTask(printB, (unsigned)STACKSIZE, "printB", 1, 10);
-	mt_enqueue(t1, &__taskQueue);
-	mt_enqueue(t2, &__taskQueue);
-	*/
+	mt_enqueue(t1, &ready_q);
+	mt_enqueue(t2, &ready_q);
+	
 
 	// Para ver la cola...
 	Task * itr;
-	for(itr=__taskQueue.head; itr != NULL && __taskQueue.tail;itr=itr->next)
+	for(itr=ready_q.head; itr != NULL && ready_q.tail;itr=itr->next)
 		printf("Elemento %s\n",itr->name);
 
 
@@ -130,13 +130,13 @@ void do_nothing(){
 void printA(){
 	long j = 0;
 	while(true){
-		j++;
+	/*	j++;
 		if(j % 50000 == 0)
 			printf("%d-", j);
 		if(j % 100000 == 0){
 			printf("Yield\n");
 			yield();
-		}
+		}*/
 		//printf("A");
 	}
 }
@@ -144,10 +144,10 @@ void printA(){
 void printB(){
 	int i = 0;
 	while(true){
-		i++;
+		/*i++;
 		if(i % 1000 == 0)
 			printf("%d", i);			
-		printf("_");
+		printf("_");*/
 	}
 }
 
@@ -359,7 +359,7 @@ __ready(Task * task, bool success)
 
 	mt_dequeue(task);
 	mt_dequeue_time(task);
-	mt_enqueue(task, &__taskQueue);
+	mt_enqueue(task, &ready_q);
 	task->success = success;
 	task->state = READY;
 }
