@@ -88,7 +88,7 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	__initializeProcessSubSystem();
 
 	/* Para ver el yield*/
-	Task * t1 = createTask(printA, (unsigned)STACKSIZE, "printA", 1, 10);
+	Task * t1 = createTask(printA, (unsigned)STACKSIZE, "printA", MAX_PRIO, 10);
 	Task * t2 = createTask(printB, (unsigned)STACKSIZE, "printB", 1, 9);
 	mt_enqueue(t1, &ready_q);
 	mt_enqueue(t2, &ready_q);
@@ -127,26 +127,26 @@ void do_nothing(){
 
 
 void printA(){
-//	long j = 0;
+	long j = 0;
 	while(true){
-	/*	j++;
+		j++;
 		if(j % 50000 == 0)
 			printf("%d-", j);
 		if(j % 100000 == 0){
 			printf("Yield\n");
 			yield();
-		}*/
+		}
 		//printf("A");
 	}
 }
 
 void printB(){
-	//int i = 0;
+	int i = 0;
 	while(true){
-		/*i++;
+		i++;
 		if(i % 1000 == 0)
 			printf("%d", i);			
-		printf("_");*/
+		printf("_");
 	}
 }
 

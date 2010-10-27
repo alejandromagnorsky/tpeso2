@@ -58,7 +58,7 @@ void __initializeProcessTree(){
 
 	__processTree->data = __processes;
 	__processTree->data->exists = 1;
-	__processTree->data->task = createTask(init, (unsigned)STACKSIZE, "init", 0, 0);
+	__processTree->data->task = createTask(init, (unsigned)STACKSIZE, "init", MAX_PRIO, 0);
 
 	// Y los agrego a la cola
 	mt_enqueue(__processTree->data->task, &ready_q);
@@ -77,7 +77,7 @@ void init(){
 		printf("Shell PID: %d\n", shellPID);
 
 		__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
-		shellProc->data->task->priority = 1;
+		shellProc->data->task->priority = MAX_PRIO;
 
 		__waitProcess(__getProcessNodeByPID(mt_curr_task->pid));
 		printf("Me mataste la consola!!!! Ahora te tiro otra\n");

@@ -4,7 +4,8 @@
 #include "../include/defs.h"
 
 #define STACKSIZE 		4096
-
+#define MAX_PRIO		4
+#define MIN_PRIO        0
 typedef enum {SUSPENDED, READY, CURRENT, DELAYING, WAITING, SENDING, RECEIVING, TERMINATED} TaskState;
 typedef struct Task Task;
 
