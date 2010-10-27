@@ -58,6 +58,8 @@ void __killProcess( __ProcessNode * p);
 
 void __waitProcess( __ProcessNode * parent);
 
+void	__processCleaner( __ProcessNode * p);
+
 
 void __printProcessTree( __ProcessNode * p );
 
@@ -66,6 +68,7 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs );
 
 void init();
 
+void exit(void);
 
 void __fork();
 

@@ -1,6 +1,7 @@
 #include "../include/process.h"
 #include "../include/kernel.h"
 #include "../include/shell.h"
+#include "../include/kasm.h"
 
 /*  Definition of process context storage.
 	A process data structure is invalid
@@ -131,9 +132,6 @@ void __deallocateProcess( __ProcessNode * p){
 }
 
 void __waitProcess( __ProcessNode * parent){
-
-	// I should block process here
-
 	int i;
 	for(i=0;i<__MAX_CHILDS;i++)
 		if(parent->childs[i] != NULL)
@@ -143,6 +141,71 @@ void __waitProcess( __ProcessNode * parent){
 				parent->childs[i] = NULL;
 				return;
 			}
+
+	// If no child has already died, then block until one dies
+	suspend(parent->data->task);
+	return;
+}
+
+
+
+__ProcessNode * __getParentProcessNode(__ProcessNode * p, __ProcessNode * c){
+
+	int i;
+	for(i=0;i<__MAX_CHILDS;i++)
+		if(p->childs[i] != NULL){
+			if(p->childs[i] == c)
+				return p;
+			else return __getParentProcessNode(p->childs[i], c);
+		}
+	return NULL;
+}
+
+void __wakeParent(__ProcessNode * child){
+
+	// At this point, child is DEAD
+	
+	__ProcessNode * init = __getProcessNodeByPID(0);
+	__ProcessNode * parent = __getParentProcessNode(init, child);
+
+	// If parent was waiting,
+	if( parent != NULL && parent->data->task->state == SUSPENDED ){
+
+		int i;
+		for(i=0;i<__MAX_CHILDS;i++)
+			if(parent->childs[i] == child){
+				parent->childs[i] = NULL;
+				__deallocateProcess(parent->childs[i]);
+			}
+
+
+		ready(parent->data->task);
+	}
+}
+
+
+/*
+--------------------------------------------------------------------------------
+exit - finaliza el proceso actual
+
+Todos los procesos creados con CreateTask retornan a esta funcion que los mata.
+Esta funcion nunca retorna.
+--------------------------------------------------------------------------------
+*/
+void exit(void){
+	DisableInts();
+
+	__wakeParent(__getProcessNodeByPID(mt_curr_task->pid));
+
+	mt_curr_task->exists = 0;
+	mt_curr_task->state = TERMINATED;
+
+	_int_20_call(0);
+
+
+	RestoreInts();
+	
+//	deleteTask(mt_curr_task);
 }
 
 int __forkProcess( __ProcessNode * p){

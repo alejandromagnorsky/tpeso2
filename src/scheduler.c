@@ -7,18 +7,37 @@ save_esp(int esp){
 	return;
 }
 
-void __top(TaskQueue * queue ){
+void __top(){
+
+	DisableInts();
+
+	TaskQueue * queue = &ready_q;
+
 	int iterations = queue->iterations;
 	Task * itr;
 	float top = 0;
-	printf("CPU Resources for queue: %s\n", queue->name);
-	printf("Priority \t CPU% \t Name\n");
+	printf("CPU Resources \n");
+	printf("Priority\tCPU% \t Name (pid) (state) \n");
 	for ( itr = queue->head ; itr != NULL && queue->tail ; itr = itr->next ){
-		printf("%d \t\t %d \t %s\n",(int)itr->priority, (int)((100*itr->count) / ((float)iterations)), itr->name);
+		printf("%d \t\t %d \t %s (%d) (ready)\n", (int)itr->priority, (int)((100*itr->count) / ((float)iterations)), itr->name, itr->pid);
 		top += (100*itr->count) / ((float)iterations);
 	}
+
+	queue = &blocked_q;
+
+	for ( itr = queue->head ; itr != NULL && queue->tail ; itr = itr->next ){
+		printf("%d \t\t %d \t %s (%d) (blocked)\n",(int)itr->priority, (int)((100*itr->count) / ((float)iterations)), itr->name, itr->pid);
+		top += (100*itr->count) / ((float)iterations);
+	}
+
+
+	// Current task
+	printf("%d \t\t %d \t %s (%d) (current)\n",(int)mt_curr_task->priority, (int)((100*mt_curr_task->count) / ((float)iterations)), mt_curr_task->name, mt_curr_task->pid);
+	top += (100*mt_curr_task->count) / ((float)iterations);
 	printf("\t\t_______\n");
 	printf("\t\t %d\n", (int)top);
+
+	RestoreInts();
 }
 
 Task * getNextTaskLottery(TaskQueue * queue){
@@ -44,15 +63,23 @@ Task * getNextTaskLottery(TaskQueue * queue){
 Task *
 getNextTask(){
 	last_task = mt_curr_task;
+
+
+	if(last_task != &main_task && last_task->state == CURRENT ){
+		last_task->state = READY;
+		mt_enqueue(last_task,&ready_q);
+	}
+
+
 	Task * next = getNextTaskLottery(&ready_q);
-	/* Para ver el yield
-	Task * next;
-	if(rand()>200) 
-		next = __taskQueue.head->next;
-	else
-		next = __taskQueue.head->next->next;*/
-	if(next != NULL)
+
+
+	if(next != NULL){
 		mt_curr_task = next;
+		mt_curr_task->state = CURRENT;
+		mt_dequeue(mt_curr_task);
+	}
+
 	return mt_curr_task;
 }
 

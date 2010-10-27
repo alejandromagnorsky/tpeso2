@@ -193,8 +193,13 @@ void __getShellArguments(char * ans){
 int openShell(int argc, char * argv[]){
 	__forkAndExec(shell, "shell");
 
-	// And put this to sleep
-	while(1);
+
+	__waitProcess(__getProcessNodeByPID(mt_curr_task->pid));
+	return 0;
+}
+
+int exitShell(int argc, char * argv[]){
+	exit();
 }
 
 void shell(){
@@ -227,6 +232,7 @@ void shell(){
 	__register_program("top", top);
 	__register_program("pstree", pstree);
 	__register_program("shell", openShell);
+	__register_program("exit", exitShell);
 
 	__register_man_page("echo","Prints the string received.");
 	__register_man_page("clear", "Clears the screen.");
@@ -250,6 +256,7 @@ void shell(){
 	__register_man_page("top","Shows CPU resources.");
 	__register_man_page("pstree","Shows process tree.");
 	__register_man_page("shell","Opens a new shell.");
+	__register_man_page("exit","Exits from shell.");
 	
 
 	// Data for user input

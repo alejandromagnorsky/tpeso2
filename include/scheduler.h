@@ -7,7 +7,7 @@ int get_temp_esp();
 bool mt_select_task(void);
 
 
-void __top(TaskQueue * queue );
+void __top();
 
 Task * getNextTaskLottery(TaskQueue * queue);
 

@@ -89,7 +89,8 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 
 	// Inicializar multitasker queues
 	mt_initTaskArray( __taskArray, __MAX_TASKS);
-	mt_initTaskQueue( &ready_q, "TPE SO2 Queue");
+	mt_initTaskQueue( &ready_q, "Ready Queue");
+	mt_initTaskQueue( &blocked_q, "Blocked Queue");
 
 	// Inicializar procesos e init (aca esta el fork inicial)
 	__initializeProcessSubSystem();
@@ -336,20 +337,6 @@ void setupIDT(){
 
 /*
 --------------------------------------------------------------------------------
-block - bloquea un proceso
---------------------------------------------------------------------------------
-*/
-
-void
-block(Task * task, TaskState state)
-{
-	mt_dequeue(task);
-	mt_dequeue_time(task);
-	task->state = state;
-}
-
-/*
---------------------------------------------------------------------------------
 ready - desbloquea un proceso y lo pone en la cola de ready
 
 Si el proceso estaba bloqueado en WaitQueue, Send o Receive, el argumento
@@ -392,24 +379,6 @@ createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority, in
 
 /*
 --------------------------------------------------------------------------------
-exit - finaliza el proceso actual
-
-Todos los procesos creados con CreateTask retornan a esta funcion que los mata.
-Esta funcion nunca retorna.
---------------------------------------------------------------------------------
-*/
-
-
-void
-exit(void)
-{
-	deleteTask(mt_curr_task);
-}
-
-
-
-/*
---------------------------------------------------------------------------------
 deleteTask - elimina un proceso creado con createTask
 
 Si es el proceso actual, envia un mensaje al proceso de limpieza y se bloquea
@@ -437,14 +406,17 @@ deleteTask(Task * task)
 	DisableInts();
 	if ( task == mt_curr_task )
 	{
-		mt_curr_task->state = TERMINATED;
-		mt_enqueue(mt_curr_task, &terminated_q);
+		mt_curr_task->exists = 0;
+		//mt_curr_task->state = TERMINATED;
+		//mt_enqueue(mt_curr_task, &terminated_q);
 		//scheduler();
 	}
 	else
 	{
-		block(task, TERMINATED);
-		free_task(task);
+		task->exists = 0;
+		mt_dequeue(task);
+//		block(task, TERMINATED);
+//		free_task(task);
 	}
 	RestoreInts();
 }
@@ -527,6 +499,22 @@ delay(int msecs)
 
 /*
 --------------------------------------------------------------------------------
+block - bloquea un proceso
+--------------------------------------------------------------------------------
+*/
+
+void
+block(Task * task, TaskState state)
+{
+	mt_dequeue(task);
+	mt_dequeue_time(task);
+	mt_enqueue(task, &blocked_q);
+	task->state = state;
+}
+
+
+/*
+--------------------------------------------------------------------------------
 suspend - suspende un proceso
 --------------------------------------------------------------------------------
 */
@@ -537,7 +525,7 @@ suspend(Task * task)
 	DisableInts();
 	block(task, SUSPENDED);
 	if ( task == mt_curr_task )
-		//scheduler();
+		_int_20_call(0);
 	RestoreInts();
 }
 
