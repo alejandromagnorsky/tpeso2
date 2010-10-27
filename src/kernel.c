@@ -85,12 +85,14 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	paging();
 	//printf("%d\n", *ptr);
 
+	_srand(1295872354);
+
 	// Inicializar multitasker queues
 	mt_initTaskArray( __taskArray, __MAX_TASKS);
 	mt_initTaskQueue( &ready_q, "TPE SO2 Queue");
 
 	// Inicializar procesos e init (aca esta el fork inicial)
-//	__initializeProcessSubSystem();
+	__initializeProcessSubSystem();
 
 	/* Para ver el yield*/
 	Task * t1 = createTask(printA, (unsigned)STACKSIZE, "printA", 1, 10);
@@ -104,7 +106,6 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	for(itr=ready_q.head; itr != NULL && ready_q.tail;itr=itr->next)
 		printf("Elemento %s\n",itr->name);
 
-	printf("\nDeberia decir Elemento printB Elemento printA\n");
 
 
 	/* Inicializar proceso principal */

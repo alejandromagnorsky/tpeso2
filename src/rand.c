@@ -14,11 +14,6 @@ void _srand(unsigned seed){
 }
 
 unsigned _rand(void){
-	// Reload seed every 500 rands
-	if( (__randCounter++) == 100 )
-		_srand(__Xn/40);
-
 	__Xn = (__Multiplier * __Xn + __Increment ) % __MAXRAND;
-
 	return __Xn;
 }
