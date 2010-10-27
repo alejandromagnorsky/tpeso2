@@ -39,5 +39,7 @@ void int_1E();
 void int_1F();
 void int_20();
 void int_21();
+void setupIDT();
+void initializePics();
 
 #endif

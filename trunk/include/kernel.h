@@ -61,9 +61,7 @@ size_t __write(int fd, const void* buffer, size_t count);
 **/
 size_t __read(int fd, void* buffer, size_t count);
 
-
-void setupIDT();
-void initializePics();
+void memcpy(char * out, char * src, int length);
 
 Task * mt_curr_task;		/* proceso en ejecucion */
 Task * last_task;			/* proceso anterior */
