@@ -51,7 +51,7 @@ Punto de entrada de C
 /* 'multiboot_info_t' stores data about memory map */
 int kmain(multiboot_info_t * mbd, unsigned int magic) 
 {
-	DisableInts();
+	__asm__("cli");
 
 	initializePics();
     
@@ -98,7 +98,7 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	ticks_to_run = QUANTUM;
 	mt_curr_task = &main_task;
 
-	RestoreInts();
+	__asm__("sti");
 
 	do_nothing(0, NULL);
 

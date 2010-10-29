@@ -20,9 +20,11 @@ get_temp_esp(){
 
 Task *
 getNextTask(){
-	last_task = mt_curr_task;
-	ticks_to_run = 0; // Temp
+	if(ticks_to_run)
+		return mt_curr_task;
 
+	last_task = mt_curr_task;
+	
 	if(last_task != &main_task && last_task->state == CURRENT )
 		__ready(last_task, true);
 
@@ -32,11 +34,11 @@ getNextTask(){
 
 	if(next != NULL){
 		mt_curr_task = next;
-		mt_curr_task->state = CURRENT;
-		mt_curr_task->count++;
-		mt_dequeue(mt_curr_task);
-		ticks_to_run = QUANTUM;
-	} 
+	}
+	mt_curr_task->state = CURRENT;
+	mt_curr_task->count++;
+	mt_dequeue(mt_curr_task);
+	ticks_to_run = QUANTUM;
 
 	return mt_curr_task;
 }
@@ -45,15 +47,6 @@ getNextTask(){
 
 Task * 
 getNextTaskRoundRobin(TaskQueue * queue){
-	if ( mt_curr_task->atomic_level )		/* No molestar */
-		return NULL;
-
-	/* Analizar prioridades y ranura de tiempo */
-	Task * ready_task = mt_peeklast(queue);
-	if ( !ready_task || ready_task->priority < mt_curr_task->priority ||
-			ticks_to_run && ready_task->priority == mt_curr_task->priority )
-		return NULL; 
-	
 	queue->iterations++;
 	return mt_getlast(queue);
 }
