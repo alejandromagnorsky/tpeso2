@@ -19,6 +19,12 @@ typedef struct{
 	int index;
 } __history_ptr;
 
+typedef struct __callFunc {
+	int argc;
+	char ** argv;
+	int (*execute)(int argc, char * argv[]);	// The executable
+} __callFunc;
+
 __executable __executable_programs[MAX_PROGRAMS];
 int __QTY_PROGRAMS;
 
@@ -40,7 +46,8 @@ __executable * getExecutableByDescriptor(char * descriptor);
 
 int __register_man_page(char * descriptor, char * man);
 
-void shell();
+void shell(int argc, char * argv[]);
+void initShell(int argc, char * argv[]);
 
 
 #endif

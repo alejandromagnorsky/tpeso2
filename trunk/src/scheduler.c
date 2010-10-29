@@ -29,7 +29,7 @@ getNextTask(){
 	}
 
 
-	Task * next = getNextTaskRoundRobin(&ready_q);
+	Task * next = getNextTaskLottery(&ready_q);
 
 
 	if(next != NULL){
@@ -38,7 +38,7 @@ getNextTask(){
 		mt_curr_task->count++;
 		mt_dequeue(mt_curr_task);
 		ticks_to_run = QUANTUM;
-	}
+	} 
 
 	return mt_curr_task;
 }
@@ -66,13 +66,13 @@ getNextTaskLottery(TaskQueue * queue){
 	int qty=0;
 	Task * itr;
 	for(itr=queue->head; itr != NULL && queue->tail;itr=itr->next)
-		qty += 4-itr->priority ;
+		qty += itr->priority ;
 
 	int ticket = (int)(((double)(((double)_rand())/((double)__MAXRAND)))*(double)qty);
 //	printf("MR: %d, Qty: %d, Ticket: %d, rand: %d\n", __MAXRAND, qty, ticket, _rand());
 	int i=0, tmp;
 	for(itr=queue->head; itr != NULL && queue->tail;itr=itr->next)
-		for(tmp=0;tmp<4-itr->priority;tmp++,i++)
+		for(tmp=0;tmp<itr->priority;tmp++,i++)
 			if(i == ticket){
 				// Este se agrega
 				queue->iterations++;
@@ -96,6 +96,7 @@ __top(){
 	float top = 0;
 	printf("CPU Resources \n");
 	printf("Priority\tCPU% \t Name (pid) (state) \n");
+	printf("--------\t--- \t ------------------\n");
 	for ( itr = queue->head ; itr != NULL && queue->tail ; itr = itr->next ){
 		printf("%d \t\t %d \t %s (%d) (ready)\n", (int)itr->priority, (int)((100*itr->count) / ((float)iterations)), itr->name, itr->pid);
 		top += (100*itr->count) / ((float)iterations);

@@ -31,6 +31,8 @@ void __initializeProcessSubSystem(){
 void __initializeProcessData(){
 	__ProcessData nullData;
 	nullData.exists = 0;
+	nullData.stdinFD = stdin;
+	nullData.stdoutFD = stdout;
 
 	int i=0;
 	for(i=0;i<__PID_MAX;i++)
@@ -48,6 +50,7 @@ void __initializeProcessTreeData(){
 	for(i=0;i<__PID_MAX;i++){
 		__processTreeData[i].data = NULL;
 		__processTreeData[i].pid = i;
+		__processTreeData[i].waitpid = __WAITALL;
 		for(j=0;j<__MAX_CHILDS;j++)
 			__processTreeData[i].childs[j] = NULL;
 	}
@@ -64,23 +67,40 @@ void __initializeProcessTree(){
 	mt_enqueue(__processTree->data->task, &ready_q);
 }
 
-void init(){
+int trywait(){
+	return __tryWaitProcess(__getProcessNodeByPID(mt_curr_task->pid), __WAITALL);
+}
 
-	// El problema aca es que cuadno haces init stack empieza desde 0, 
-	// entonces habria un ciclo infinito. Hay que arreglar eso.
+void wait(){
+	__waitProcess(__getProcessNodeByPID(mt_curr_task->pid), __WAITALL);
+}
+
+void	waitpid(int pid){
+	__waitProcess(__getProcessNodeByPID(mt_curr_task->pid), pid);
+}
+
+void init(){
 
 	printf("Init started. Calling shell...\n");
 
-	while(true){
-		int shellPID = __forkAndExec(shell, "shell");
+	char * argv[] = {"shell" , NULL };
+	int shellPID = __forkAndExec(initShell, 1, argv);
 
-		printf("Shell PID: %d\n", shellPID);
+	__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
+	shellProc->data->task->priority = MAX_PRIO-1;
+
+	while(true){
+		
+		wait();
+		printf("Shell terminated. Calling shell...\n");
+
+
+		char * argv[] = {"shell" , NULL };
+		int shellPID = __forkAndExec(shell, 1, argv);
 
 		__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
-		shellProc->data->task->priority = MAX_PRIO;
+		shellProc->data->task->priority = MAX_PRIO-1;
 
-		__waitProcess(__getProcessNodeByPID(mt_curr_task->pid));
-		printf("Me mataste la consola!!!! Ahora te tiro otra\n");
 	}
 }
 
@@ -113,11 +133,90 @@ void __addChild( __ProcessNode * parent, __ProcessNode * child){
 		}
 }
 
+void __deallocateProcess( __ProcessNode * p){
+	p->data->task->exists = 0;
+	p->data->exists = 0;
+	p->data->stdoutFD = stdout;
+	p->data->stdinFD = stdin;
+	p->data = NULL;
+	p->waitpid = __WAITALL;
+}
+
+int __tryWaitProcess( __ProcessNode * parent, int pid){
+	int i;
+	for(i=0;i<__MAX_CHILDS;i++)
+		if(parent->childs[i] != NULL){
+			if(parent->childs[i]->data != NULL && parent->childs[i]->data->task != NULL)
+				// If child is DEAD, reap it and return
+				if(parent->childs[i]->data->task->state == TERMINATED && ( pid == __WAITALL || parent->childs[i]->pid == pid )){
+					__deallocateProcess(parent->childs[i]);
+					int out = parent->childs[i]->pid;
+					parent->childs[i] = NULL;
+					return out;
+				}
+	}
+	return -1;
+}
+
+void __waitProcess( __ProcessNode * parent, int pid){
+	__tryWaitProcess(parent,pid);	
+
+	// If no child has already died, then block until one dies
+	parent->waitpid = pid;
+		suspend(parent->data->task);
+	parent->waitpid = __WAITALL;
+	return;
+}
+
+
+
+__ProcessNode * __getParentProcessNode(__ProcessNode * p, __ProcessNode * c){
+
+	__ProcessNode * out = NULL;
+
+	int i;
+	for(i=0;i<__MAX_CHILDS;i++)
+		if(p->childs[i] != NULL){
+			if(p->childs[i] == c)
+				out = p;
+			else out = __getParentProcessNode(p->childs[i], c);
+			if(out != NULL)
+				return out;
+		}
+	return out;
+}
+
+void __wakeParent(__ProcessNode * child){
+
+
+	DisableInts();
+
+	// At this point, child is DEAD
+	__ProcessNode * init = __getProcessNodeByPID(0);
+
+	__ProcessNode * parent = __getParentProcessNode(init, child);
+
+	// If parent was waiting,
+	if( parent != NULL && parent->data->task->state == SUSPENDED && ( parent->waitpid == __WAITALL || parent->waitpid == child->pid ) ){
+		int i;
+		for(i=0;i<__MAX_CHILDS;i++)
+			if(parent->childs[i] == child){
+				__deallocateProcess(parent->childs[i]);
+				parent->childs[i] = NULL;
+				__ready(parent->data->task, true);
+				return;
+			}
+	}
+	RestoreInts();
+}
+
 
 void __killProcess( __ProcessNode * p){
 
-	p->data->exists = 0;
-	// Block task, etc.
+	// Dequeue task and terminate it
+	// (if it is curr task, it will prevent it from being enqueued again)
+	p->data->task->state = TERMINATED;
+	mt_dequeue(p->data->task);
 
 	__ProcessNode * init = __getProcessNodeByPID(0);
 
@@ -128,63 +227,14 @@ void __killProcess( __ProcessNode * p){
 			__addChild(init, p->childs[i]);		
 			p->childs[i] = NULL;
 		}
-
 }
 
-void __deallocateProcess( __ProcessNode * p){
-	p->data = NULL;
-}
-
-void __waitProcess( __ProcessNode * parent){
-	int i;
-	for(i=0;i<__MAX_CHILDS;i++)
-		if(parent->childs[i] != NULL)
-			// If child is DEAD, reap it and return
-			if(!parent->childs[i]->data->exists){
-				__deallocateProcess(parent->childs[i]);
-				parent->childs[i] = NULL;
-				return;
-			}
-
-	// If no child has already died, then block until one dies
-	suspend(parent->data->task);
-	return;
-}
-
-
-
-__ProcessNode * __getParentProcessNode(__ProcessNode * p, __ProcessNode * c){
-
-	int i;
-	for(i=0;i<__MAX_CHILDS;i++)
-		if(p->childs[i] != NULL){
-			if(p->childs[i] == c)
-				return p;
-			else return __getParentProcessNode(p->childs[i], c);
-		}
-	return NULL;
-}
-
-void __wakeParent(__ProcessNode * child){
-
-	// At this point, child is DEAD
-	
-	__ProcessNode * init = __getProcessNodeByPID(0);
-	__ProcessNode * parent = __getParentProcessNode(init, child);
-
-	// If parent was waiting,
-	if( parent != NULL && parent->data->task->state == SUSPENDED ){
-
-		int i;
-		for(i=0;i<__MAX_CHILDS;i++)
-			if(parent->childs[i] == child){
-				parent->childs[i] = NULL;
-				__deallocateProcess(parent->childs[i]);
-			}
-
-
-		ready(parent->data->task);
-	}
+void _kill(int pid){
+	DisableInts();
+		__ProcessNode * p = __getProcessNodeByPID(pid);
+		__killProcess(p);	
+		__wakeParent(p);
+	RestoreInts();
 }
 
 
@@ -196,20 +246,17 @@ Todos los procesos creados con CreateTask retornan a esta funcion que los mata.
 Esta funcion nunca retorna.
 --------------------------------------------------------------------------------
 */
-void exit(void){
+void exit(int argc, char * argv[]){
+
 	DisableInts();
 
-	__wakeParent(__getProcessNodeByPID(mt_curr_task->pid));
+	__ProcessNode * p = __getProcessNodeByPID(mt_curr_task->pid);
 
-	mt_curr_task->exists = 0;
-	mt_curr_task->state = TERMINATED;
+	__killProcess(p);	
+	__wakeParent(p);
 
 	_int_20_call(0);
-
-
 	RestoreInts();
-	
-//	deleteTask(mt_curr_task);
 }
 
 int __forkProcess( __ProcessNode * p){
@@ -219,7 +266,7 @@ int __forkProcess( __ProcessNode * p){
 	__ProcessNode * child = getAvailableProcessNode();
 
 	// Copy data and activate it (should be activated anyways)
-	*data = *(p->data);
+	*(data) = *(p->data);
 	data->exists = 1;
 	
 	// Construct child
@@ -238,7 +285,7 @@ int __forkProcess( __ProcessNode * p){
 }
 
 void __printProcessData( __ProcessNode * p ){
-		if(p->data->exists)
+		if(p->data->task->state != TERMINATED)
 			printf("%s", p->data->task->name);
 		else printf("Dead");
 }
@@ -283,74 +330,23 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs ){
 
 
 // TEST !!!
-int __forkAndExec(TaskFunc f, char * name){
+int __forkAndExec(TaskFunc f, int argc, char * argv[]){
+
+	DisableInts();
+
 	__ProcessNode * p = __getProcessNodeByPID(mt_curr_task->pid);
 
 	int childPID = __forkProcess(p);
 
-	printf("Child PID:%d\n", childPID);
-
-	// Create child taskda
+	// Create child task
 	__ProcessNode * child = __getProcessNodeByPID(childPID);
-	
+
 	//printf("STACK CHILD %d, STACK PARENT %d, ESP: %d, PRIO: %d", child->data->task->stack, p->data->task->stack, child->data->task->esp, child->data->task->priority);
-	child->data->task = createTask(f, (unsigned)STACKSIZE, name, p->data->task->priority, childPID);
+	child->data->task = createTask(f, (unsigned)STACKSIZE, argv[0], p->data->task->priority, childPID);
 	
-	// Add it to queue
-	mt_enqueue(child->data->task, &ready_q);
+	__ready(child->data->task, true);
+
+	RestoreInts();
 	
 	return childPID;
 }
-
-/*
-int main(){
-
-
-	// Initialization
-	__initializeProcessData();
-
-	__initializeProcessTreeData();
-
-	__initializeProcessTree();
-
-
-	// Create main process (init)
-	__processTree->data = __processes;
-	__processTree->data->exists = 1;
-	__processTree->data->test = 5;
-
-
-	// Test forking
-	__forkProcess(__processTree);
-
-	__forkProcess(__processTree);
-
-	__forkProcess(__processTree);
-
-	__processTree->childs[0]->data->test = 856;
-
-	__processTree->childs[1]->data->test = 249;
-
-
-
-	__forkProcess(__processTree->childs[0]);
-
-	__forkProcess(__processTree->childs[1]);
-
-	__processTree->data->test = 376;
-
-
-	__killProcess(__getProcessNodeByPID(2));
-
-	__printProcessTree(__processTree);
-
-
-	__waitProcess( __getProcessNodeByPID(0)); // Init waits
-
-	__waitProcess( __getProcessNodeByPID(0)); // Init waits
-
-
-	__printProcessTree(__processTree);
-
-
-}*/

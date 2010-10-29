@@ -9,9 +9,8 @@
 
 
 void __printMemoryMap(multiboot_info_t * mbd);
-void printA();
-void printB();
-
+void printA(int argc, char * argv[]);
+void printB(int argc, char * argv[]);
 
 // INCLUDE TEMPORAL
 // extern char page_map[];
@@ -36,7 +35,7 @@ size_t __read(int fd, void* buffer, size_t count){
 }
 
 size_t __write(int fd, const void* buffer, size_t count){
-	if(fd == stdout)
+	if(fd == procStdout)
 			__write_terminal(buffer,count);
 	return count;
 }
@@ -87,20 +86,6 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	// Inicializar procesos e init (aca esta el fork inicial)
 	__initializeProcessSubSystem();
 
-	/* Para ver el yield*/
-	Task * t1 = createTask(printA, (unsigned)STACKSIZE, "printA", MAX_PRIO, 10);
-	Task * t2 = createTask(printB, (unsigned)STACKSIZE, "printB", 1, 9);
-	mt_enqueue(t1, &ready_q);
-	mt_enqueue(t2, &ready_q);
-	
-
-	// Para ver la cola...
-	Task * itr;
-	for(itr=ready_q.head; itr != NULL && ready_q.tail;itr=itr->next)
-		printf("Elemento %s\n",itr->name);
-
-
-
 	/* Inicializar proceso principal */
 	main_task.name = "Main Task";
 	main_task.state = CURRENT;
@@ -115,40 +100,16 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 
 	RestoreInts();
 
-	do_nothing();
+	do_nothing(0, NULL);
 
 	return 0;
 }
 
-void do_nothing(){ 
+void do_nothing(int argc, char * argv[]){ 
 	while(true)
 		;
 }
 
-
-void printA(){
-	long j = 0;
-	while(true){
-		j++;
-		if(j % 50000 == 0)
-			printf("%d-", j);
-		if(j % 100000 == 0){
-			printf("Yield\n");
-			yield();
-		}
-		//printf("A");
-	}
-}
-
-void printB(){
-	int i = 0;
-	while(true){
-		i++;
-		if(i % 1000 == 0)
-			printf("%d", i);			
-		printf("_");
-	}
-}
 
 /*
  * Temporal function to understand what is going on!

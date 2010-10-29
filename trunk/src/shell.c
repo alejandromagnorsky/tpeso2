@@ -1,6 +1,10 @@
 #include "../include/shell.h"
+#include "../include/process.h"
 #include "../include/interrupts.h"
 #include "../include/programs.h"
+
+
+__callFunc callFunc;
 
 int __register_program(char * descriptor, int (*execute)(int argc, char * argv[])){
 	__executable exec;
@@ -190,25 +194,29 @@ void __getShellArguments(char * ans){
 	printf("\n");
 }
 
-int openShell(int argc, char * argv[]){
-	__forkAndExec(shell, "shell");
-
-	__waitProcess(__getProcessNodeByPID(mt_curr_task->pid));
-	return 0;
-}
-
-int exitShell(int argc, char * argv[]){
-	exit();
-}
-
-void shell(){
-
+void initShell(int a, char * v[]){
 	sysinfo();
-	printf("\n");
-	__printSystemSymbol();
+	printf("OK: 1) hay procesos background (usar !)\n");
+	printf("2) Shell no hace wait a los proc. background para mostrar. Usar comando waitDead para reapearlos\n");
+	printf("3) Hay kill. No reapea, solo mata\n");
+	printf("4) Shell hace wait si el proceso NO es background, por eso van a ver a shell blocked si hacen top\n");
+	printf("5) Procesos en background pierden stdout, y pueden perder stdin si lo implementamos, no me parecio necesario\n");
+	printf("6) MEHHHHHHHHHHHH nose, varias pelotudeces mas.\n");
 
-	printf("Che, hagan 'top' y 'pstree'. El tema del fork y exec esta un poco cableado por ahora pero parece andar.\n");
-	printf("Tambien, para probar como funciona el arbol, usen el comando 'shell'\n");
+
+	printf("\n Como siempre, puede haber bugs \n");
+
+	shell(a,v);
+}
+
+void wrapProcess(int a, char *v[]){
+	callFunc.execute(callFunc.argc, callFunc.argv);
+}
+
+void shell(int a, char * v[]){
+
+
+	printf("\n");
 	__printSystemSymbol();
 	
 	__QTY_PROGRAMS = 0;
@@ -230,8 +238,10 @@ void shell(){
 	__register_program("history", history);
 	__register_program("top", top);
 	__register_program("pstree", pstree);
-	__register_program("shell", openShell);
-	__register_program("exit", exitShell);
+	__register_program("kill", kill);
+	__register_program("shell", (int (*)(int,char**))shell);
+	__register_program("exit", (int (*)(int,char**))exit);
+	__register_program("waitDead", (int (*)(int,char**))do_nothing);
 
 	__register_man_page("echo","Prints the string received.");
 	__register_man_page("clear", "Clears the screen.");
@@ -256,6 +266,8 @@ void shell(){
 	__register_man_page("pstree","Shows process tree.");
 	__register_man_page("shell","Opens a new shell.");
 	__register_man_page("exit","Exits from shell.");
+	__register_man_page("kill","-pid Kills a process with pid");
+	__register_man_page("waitDead","Demonstration only: makes shell wait first dead children");
 	
 
 	// Data for user input
@@ -271,6 +283,7 @@ void shell(){
 		char arg_data[MAX_ARGUMENTS][MAX_ARGUMENT_LENGTH];
 		char argc = 0;
 		int tmp = 0;
+		int background = 0;
 
 		// Get arguments, separated by ' '
 		for(i=0;user_input[i] != NULL && argc < MAX_ARGUMENTS && tmp < MAX_ARGUMENT_LENGTH;i++){
@@ -289,10 +302,40 @@ void shell(){
 		    char * argv[MAX_ARGUMENTS] = { 0 };
 		    for(i=0;i<argc;i++)
 		        argv[i] = arg_data[i];
+
+		    // Check if command is background comm
+		    for(i=0;argv[0][i] != NULL;i++)
+				if(argv[0][i] == '!' && argv[0][i+1] == NULL){
+					argv[0][i] = NULL;
+					background = 1;
+				}
 	   
 		    __executable * exec = getExecutableByDescriptor(argv[0]);
-		    if(exec != NULL)
-		        exec->execute(argc, argv);
+		    if(exec != NULL){
+			   if(!strcmp("exit", argv[0]))
+				exit(argc,argv);				
+			   else {
+					if(!strcmp("waitDead",argv[0])){
+						int dpid = trywait();
+						printf("[ (%d) Done ]\n", dpid);
+					} else {
+						callFunc.argc = argc;
+						callFunc.argv = argv;
+						callFunc.execute = exec->execute;
+						// Take off stdout if background process
+						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = background ? 2 : stdout;	
+						int pid = __forkAndExec(wrapProcess, argc, argv);
+						// Reset stdout after fork
+						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = stdout;
+						if(!background)
+							waitpid(pid);
+						else printf("[ OK ] %d \n", pid);
+					
+
+						background = 0;
+					}
+			   }
+			}
 		    else if(user_input[0] != NULL)
 		        printf("Error: invalid command. \n");
 		}

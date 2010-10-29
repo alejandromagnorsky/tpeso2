@@ -718,9 +718,10 @@ _init_stack:
         push eax            
             
         push cs             ; Code segment.
-            
+
         mov eax, [ebp + 8]  ; Funcion inicial del task
         push eax           
+	   
             
         pushad              ; Pushea los registros
         mov eax, esp        ; Retorna el puntero al stack

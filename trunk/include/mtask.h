@@ -53,7 +53,7 @@ struct Task{
 
 
 // Puntero a la funcion a ejecutar al iniciar el proceso
-typedef void (*TaskFunc)();
+typedef void (*TaskFunc)(int argc, char * argv[]);
 
 
 Task * mt_getAvailableTask( Task tasks[], int size);
@@ -81,7 +81,7 @@ bool		receive(Task ** from, char * msg, int * size);
 void		pause(void);
 void		yield(void);
 void		delay(int msecs);
-void		exit(void);
+void		exit(int argc, char * argv[]);
 
 
 #endif

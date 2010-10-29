@@ -40,7 +40,7 @@ void putInt(int n);
 int rand();
 
 /* Tiempo de espera */
-void wait(int time);
+void sleep(int time);
 
 /* Inicializa la entrada del IDT */
 void setup_IDT_entry (DESCR_INT *item, byte selector, dword offset, byte access,
