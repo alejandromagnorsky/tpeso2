@@ -62,7 +62,7 @@ void __initializeProcessTree(){
 
 	__processTree->data = __processes;
 	__processTree->data->exists = 1;
-	__processTree->data->task = createTask(init, (unsigned)STACKSIZE, "init", MAX_PRIO, 0);
+	__processTree->data->task = createTask(init, 0, NULL, "init", MAX_PRIO, 0);
 
 	// Y los agrego a la cola
 	mt_enqueue(__processTree->data->task, &ready_q);
@@ -341,7 +341,7 @@ int __forkAndExec(TaskFunc f, int argc, char * argv[]){
 	__ProcessNode * child = __getProcessNodeByPID(childPID);
 
 	//printf("STACK CHILD %d, STACK PARENT %d, ESP: %d, PRIO: %d", child->data->task->stack, p->data->task->stack, child->data->task->esp, child->data->task->priority);
-	child->data->task = createTask(f, (unsigned)STACKSIZE, argv[0], p->data->task->priority, childPID);
+	child->data->task = createTask(f, argc, argv, argv[0], p->data->task->priority, childPID);
 	child->data->task->exists = 1;
 	
 	__ready(child->data->task, true);

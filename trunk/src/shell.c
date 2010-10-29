@@ -257,10 +257,6 @@ void shellManager(int a, char * v[]){
 	}
 }
 
-void wrapProcess(int a, char *v[]){
-	callFunc.execute(callFunc.argc, callFunc.argv);
-}
-
 void shell(int a, char * v[]){
 
 	int shelltty = __getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD;
@@ -376,7 +372,7 @@ void shell(int a, char * v[]){
 						// Take off stdout if background process
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = background ? -1 : shelltty;	
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = background ? -1 : shelltty;	
-						int pid = __forkAndExec(wrapProcess, argc, argv);
+						int pid = __forkAndExec((TaskFunc)exec->execute, argc, argv);
 						// Reset stdout after fork
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = shelltty;
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = shelltty;	

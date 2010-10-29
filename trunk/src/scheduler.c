@@ -27,7 +27,7 @@ getNextTask(){
 
 	Task * next = NULL;
 	if(ticks_to_run == 0){
-		next = getNextTaskLottery(&ready_q);
+		next = getNextTaskRoundRobin(&ready_q);
 		ticks_to_run = QUANTUM;
 	}
 
@@ -82,27 +82,27 @@ __top(){
 	Task * itr;
 	float top = 0;
 	printf("CPU Resources \n");
-	printf("Priority\tCPU% \t Name (pid) (state) \n");
-	printf("--------\t--- \t ------------------\n");
+	printf("Priority\tCPU\tPID\tName\t\t\tState\n");
+	printf("--------\t---\t---\t----\t\t\t-----\n");
 	for ( itr = queue->head ; itr != NULL && queue->tail ; itr = itr->next ){
-		printf("%d \t\t %d \t %s (%d) (ready)\n", (int)itr->priority, (int)((100*itr->count) / ((float)iterations)), itr->name, itr->pid);
+		printf("%d \t\t %d \t %d \t %s \t\t\tREADY\n", (int)itr->priority, (int)((100*itr->count) / ((float)iterations)), itr->pid, itr->name);
 		top += (100*itr->count) / ((float)iterations);
 	}
 
 	queue = &blocked_q;
 
 	for ( itr = queue->head ; itr != NULL && queue->tail ; itr = itr->next ){
-		printf("%d \t\t %d \t %s (%d) (blocked)\n",(int)itr->priority, (int)((100*itr->count) / ((float)iterations)), itr->name, itr->pid);
+		printf("%d \t\t %d \t %d \t %s \t\t\tBLOCKED\n",(int)itr->priority, (int)((100*itr->count) / ((float)iterations)), itr->pid, itr->name);
 
 		top += (100*itr->count) / ((float)iterations);
 	}
 
 
 	// Current task
-	printf("%d \t\t %d \t %s (%d) (current)\n",(int)mt_curr_task->priority, (int)((100*mt_curr_task->count) / ((float)iterations)), mt_curr_task->name, mt_curr_task->pid);
+	printf("%d \t\t %d \t %d \t %s \t\t\tCURRENT\n",(int)mt_curr_task->priority, (int)((100*mt_curr_task->count) / ((float)iterations)), mt_curr_task->pid, mt_curr_task->name);
 	top += (100*mt_curr_task->count) / ((float)iterations);
-	printf("\t\t_______\n");
-	printf("\t\t %d\n", (int)top);
+	printf("\t\t  _____\n");
+	printf("\t\t   %d\n", (int)top);
 
 	RestoreInts();
 }
