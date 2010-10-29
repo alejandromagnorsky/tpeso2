@@ -14,10 +14,8 @@ void mt_initTaskQueue( TaskQueue * queue, char * name ){
 
 void mt_initTaskArray( Task tasks[], int size){
 	int i;
-	for(i=0;i<size;i++){
+	for(i=0;i<size;i++)
 		tasks[i].exists = 0;
-		tasks[i].name = NULL;
-	}
 }
 
 

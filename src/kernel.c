@@ -87,7 +87,7 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	__initializeProcessSubSystem();
 
 	/* Inicializar proceso principal */
-	main_task.name = "Main Task";
+	memcpy(main_task.name,"Main Task", 10);
 	main_task.state = CURRENT;
 	main_task.priority = 0;
 	main_task.send_queue.name = main_task.name;
@@ -206,7 +206,7 @@ createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority, in
 	//Task * task;
 	Task * task = mt_getAvailableTask( __taskArray, __MAX_TASKS);
 	task->priority = priority;
-	task->name = name;
+	memcpy(task->name, name,strlen(name)+1);
 	task->count = 0;
 	task->pid = pid;
 	//task->send_queue.name = StrDup(name);

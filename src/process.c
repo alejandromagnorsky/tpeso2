@@ -232,6 +232,8 @@ void __killProcess( __ProcessNode * p){
 void _kill(int pid){
 	DisableInts();
 		__ProcessNode * p = __getProcessNodeByPID(pid);
+		printf("[%s (%d)] Killed\n", p->data->task->name, pid);
+
 		__killProcess(p);	
 		__wakeParent(p);
 	RestoreInts();
@@ -266,8 +268,10 @@ int __forkProcess( __ProcessNode * p){
 	__ProcessNode * child = getAvailableProcessNode();
 
 	// Copy data and activate it (should be activated anyways)
-	*(data) = *(p->data);
 	data->exists = 1;
+	data->stdinFD = p->data->stdinFD;
+	data->stdoutFD = p->data->stdoutFD;
+	data->task = p->data->task;
 	
 	// Construct child
 	child->data = data;
@@ -316,7 +320,7 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs ){
 			// Print it nicely
 			if(!hasChilds){
 				hasChilds = 1;
-				printf("\t|\n");
+				printf("\n");
 			}
 
 		__printProcessTreeTabs(p->childs[i], tabs+1);
@@ -343,6 +347,7 @@ int __forkAndExec(TaskFunc f, int argc, char * argv[]){
 
 	//printf("STACK CHILD %d, STACK PARENT %d, ESP: %d, PRIO: %d", child->data->task->stack, p->data->task->stack, child->data->task->esp, child->data->task->priority);
 	child->data->task = createTask(f, (unsigned)STACKSIZE, argv[0], p->data->task->priority, childPID);
+	child->data->task->exists = 1;
 	
 	__ready(child->data->task, true);
 

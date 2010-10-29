@@ -23,10 +23,8 @@ getNextTask(){
 	last_task = mt_curr_task;
 	ticks_to_run = 0; // Temp
 
-	if(last_task != &main_task && last_task->state == CURRENT ){
-		last_task->state = READY;
-		mt_enqueue(last_task,&ready_q);
-	}
+	if(last_task != &main_task && last_task->state == CURRENT )
+		__ready(last_task, true);
 
 
 	Task * next = getNextTaskLottery(&ready_q);
