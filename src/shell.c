@@ -196,7 +196,7 @@ void __getShellArguments(char * ans){
 
 void initShell(int a, char * v[]){
 	sysinfo();
-	printf("OK: 1) hay procesos background (usar !)\n");
+	printf("OK: 1) hay procesos background. Usar &(SHIFT+6)\n");
 	printf("2) Shell no hace wait a los proc. background para mostrar. Usar comando waitDead para reapearlos\n");
 	printf("3) Hay kill. No reapea, solo mata\n");
 	printf("4) Shell hace wait si el proceso NO es background, por eso van a ver a shell blocked si hacen top\n");
@@ -305,7 +305,7 @@ void shell(int a, char * v[]){
 
 		    // Check if command is background comm
 		    for(i=0;argv[0][i] != NULL;i++)
-				if(argv[0][i] == '!' && argv[0][i+1] == NULL){
+				if(argv[0][i] == '&' && argv[0][i+1] == NULL){
 					argv[0][i] = NULL;
 					background = 1;
 				}

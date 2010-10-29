@@ -230,3 +230,103 @@ mt_getfirst_time(void)
 	task->in_time_q = false;
 	return task;
 }
+
+
+/*
+--------------------------------------------------------------------------------
+DeleteQueue - destruye una cola de procesos
+--------------------------------------------------------------------------------
+*/
+/*
+void
+DeleteQueue(TaskQueue * queue)
+{
+	flushQueue(queue, false);
+	Free(queue->name);
+	Free(queue);
+}
+*/
+
+
+/*
+--------------------------------------------------------------------------------
+WaitQueue, WaitQueueCond, WaitQueueTimed - esperar en una cola de procesos
+
+El valor de retorno es true si el proceso fue despertado por SignalQueue
+o el valor pasado a FlushQueue.
+Si msecs es FOREVER, espera indefinidamente. Si msecs es cero, retorna false.
+--------------------------------------------------------------------------------
+*/
+/*
+bool			
+waitQueue(TaskQueue * queue)
+{
+	return waitQueueTimed(queue, FOREVER);
+}
+
+bool			
+waitQueueTimed(TaskQueue * queue, int msecs)
+{
+	bool success;
+
+	if ( !msecs )
+		return false;
+
+	DisableInts();
+	block(mt_curr_task, WAITING);
+	mt_enqueue(mt_curr_task, queue);
+	if ( msecs != FOREVER )
+		mt_enqueue_time(mt_curr_task, msecs_to_ticks(msecs));
+	scheduler();
+	success = mt_curr_task->success;
+	RestoreInts();
+
+	return success;
+}
+*/
+/*
+--------------------------------------------------------------------------------
+SignalQueue, FlushQueue - funciones para despertar procesos en una cola
+
+SignalQueue despierta el ultimo proceso de la cola (el de mayor prioridad o
+el que llego primero entre dos de la misma prioridad), el valor de retorno 
+es true si desperto a un proceso. Este proceso completa su WaitQueue() 
+exitosamente.
+FlushQueue despierta a todos los procesos de la cola, que completan su
+WaitQueue() con el resultado que se pasa como argumento.
+--------------------------------------------------------------------------------
+*/
+/*
+bool		
+signalQueue(TaskQueue * queue)
+{
+	Task * task;
+
+	DisableInts();
+	if ( task = mt_getlast(queue) )
+	{
+		__ready(task, true);
+		scheduler();
+	}
+	RestoreInts();
+
+	return task != NULL;
+}
+*/
+void			
+flushQueue(TaskQueue * queue, bool success)
+{
+	Task * task;
+
+	DisableInts();
+	if ( mt_peeklast(queue) )
+	{
+		while ( (task = mt_getlast(queue)) )
+			__ready(task, success);
+		//scheduler();
+	}
+	RestoreInts();
+}
+
+
+

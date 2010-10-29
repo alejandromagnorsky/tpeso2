@@ -1,6 +1,7 @@
 #ifndef _queue_
 #define _queue_
 #include "../include/mtask.h"
+#include "../include/kernel.h"
 
 #define __MAX_TASKS 500
 
@@ -20,4 +21,12 @@ void	mt_enqueue_time(Task * task, int ticks);
 void	mt_dequeue_time(Task * task);
 Task *	mt_peekfirst_time(void);
 Task * 	mt_getfirst_time(void);
+
+void	deleteQueue(TaskQueue * queue);
+bool	waitQueue(TaskQueue *queue);
+bool	waitQueueTimed(TaskQueue * queue, int msecs);
+bool	signalQueue(TaskQueue * queue);
+void	flushQueue(TaskQueue * queue, bool success);
+
+
 #endif
