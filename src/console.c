@@ -250,9 +250,10 @@ void __switch_last_terminal(){
 }
 
 int __switch_terminal(int index){
-	if(index >= __MAX_TERMINALS )
+	if(index >= __MAX_TERMINALS || index < 0 )
 		return -1;
-	else {
+	else if( index != __TTY_INDEX ){
+		
 		__TTY_INDEX = index;
 		__flush_terminal(0);
 	}

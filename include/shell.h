@@ -47,7 +47,7 @@ __executable * getExecutableByDescriptor(char * descriptor);
 int __register_man_page(char * descriptor, char * man);
 
 void shell(int argc, char * argv[]);
-void initShell(int argc, char * argv[]);
+void shellManager(int argc, char * argv[]);
 
 
 #endif

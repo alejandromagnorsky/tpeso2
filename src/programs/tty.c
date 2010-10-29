@@ -20,8 +20,6 @@ int tty(int argc, char * argv[]){
 		if(!strcmp(argv[1], "-ss") && argv[2] != NULL)
 			__changeSystemSymbol(argv[2]);
 
-
-
 		return 0;
 	}
 

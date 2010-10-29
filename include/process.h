@@ -76,6 +76,8 @@ void _kill(int pid);
 
 void wait();
 
+int getpid();
+
 int trywait();
 
 void	waitpid(int pid);

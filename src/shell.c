@@ -2,9 +2,11 @@
 #include "../include/process.h"
 #include "../include/interrupts.h"
 #include "../include/programs.h"
-
+#include "../include/console.h"
 
 __callFunc callFunc;
+
+int shellIndex = 1;
 
 int __register_program(char * descriptor, int (*execute)(int argc, char * argv[])){
 	__executable exec;
@@ -194,17 +196,68 @@ void __getShellArguments(char * ans){
 	printf("\n");
 }
 
-void initShell(int a, char * v[]){
-	sysinfo();
-	printf("OK: 1) hay procesos background. Usar &(SHIFT+6)\n");
-	printf("2) Shell no hace wait a los proc. background para mostrar. Usar comando waitDead para reapearlos\n");
-	printf("3) Hay kill. No reapea, solo mata\n");
-	printf("4) Shell hace wait si el proceso NO es background, por eso van a ver a shell blocked si hacen top\n");
-	printf("5) Procesos en background pierden stdout, y pueden perder stdin si lo implementamos, no me parecio necesario\n");
-	printf("6) Tambien esta sleep ahora, y nose, varias pelotudeces mas.\n");
-	printf("Como siempre, puede haber bugs. Al shell matenlo con exit, no kill(bug de init creo, dps lo veo) \n");
+int getDeadTTY(__ProcessNode * manager, int maxTTY){
 
-	shell(a,v);
+	int i;
+	int j;
+
+	for(j=0;j<maxTTY;j++){
+
+		int exists = 0;
+		
+		for(i=0;i<__MAX_CHILDS;i++)
+			if(manager->childs[i] != NULL)
+				if(manager->childs[i]->data->stdinFD == j)
+					exists = 1;
+		if(!exists)
+			return j;
+	}
+					
+
+	return -1;
+}
+
+void shellManager(int a, char * v[]){
+
+	shellIndex = 0;
+	__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = 0;	
+
+	sysinfo();
+	printf("NO MATEN SHELLS POR AHORA. Usen tty -s o F1,F2.. etc para cambiar terminal\n");
+
+	printf("LALA %d\n", __TTY_INDEX);
+
+
+	char * argv[] = {"shell" , NULL };
+	int shellPID;
+	int i;
+	for(i=0;i<10;i++){
+
+		__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = i;
+		__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = i;
+
+		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority--;
+			shellPID = __forkAndExec(shell, 1, argv);	
+		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority++;
+	}
+
+
+	printf("Terminales creadas\n");
+	while(1){
+		wait();
+		
+		printf("SHELL DEAD\n");
+		int deadTTY = getDeadTTY(__getProcessNodeByPID(mt_curr_task->pid),10);
+
+		printf("Shell %d killed. Calling shell..\n", deadTTY);
+
+		__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = deadTTY;
+		__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = deadTTY;
+
+		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority--;
+			shellPID = __forkAndExec(shell, 1, argv);	
+		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority++;
+	}
 }
 
 void wrapProcess(int a, char *v[]){
@@ -213,6 +266,7 @@ void wrapProcess(int a, char *v[]){
 
 void shell(int a, char * v[]){
 
+	int shelltty = __getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD;
 
 	printf("\n");
 	__printSystemSymbol();
@@ -305,7 +359,7 @@ void shell(int a, char * v[]){
 
 		    // Check if command is background comm
 		    for(i=0;argv[0][i] != NULL;i++)
-				if(argv[0][i] == '&' && argv[0][i+1] == NULL){
+				if(argv[0][i] == '!' && argv[0][i+1] == NULL){
 					argv[0][i] = NULL;
 					background = 1;
 				}
@@ -323,10 +377,12 @@ void shell(int a, char * v[]){
 						callFunc.argv = argv;
 						callFunc.execute = exec->execute;
 						// Take off stdout if background process
-						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = background ? 2 : stdout;	
+						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = background ? -1 : shelltty;	
+						__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = background ? -1 : shelltty;	
 						int pid = __forkAndExec(wrapProcess, argc, argv);
 						// Reset stdout after fork
-						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = stdout;
+						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = shelltty;
+						__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = shelltty;	
 						if(!background)
 							waitpid(pid);
 						else printf("[ OK ] %d \n", pid);
