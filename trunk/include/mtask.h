@@ -6,6 +6,7 @@
 #define STACKSIZE 		4096
 #define MAX_PRIO		4
 #define MIN_PRIO        0
+#define MAX_NAMELENGTH 32
 typedef enum {SUSPENDED, READY, CURRENT, DELAYING, WAITING, SENDING, RECEIVING, TERMINATED} TaskState;
 typedef struct Task Task;
 
@@ -17,7 +18,7 @@ typedef struct{
 } TaskQueue;
 
 struct Task{
-	char * 	name;
+	char name[MAX_NAMELENGTH];
 	unsigned 	priority;
 	unsigned	atomic_level;
 	TaskState state;	

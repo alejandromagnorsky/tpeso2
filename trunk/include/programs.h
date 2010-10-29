@@ -20,6 +20,8 @@ int reboot(int argc, char * argv[]);
 int history(int argc, char * argv[]);
 
 
+int daemon1(int argc, char * argv[]);
+
 int top(int argc, char * argv[]);
 int kill(int argc, char * argv[]);
 int pstree(int argc, char * argv[]);

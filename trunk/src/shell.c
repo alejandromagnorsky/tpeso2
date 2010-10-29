@@ -201,10 +201,8 @@ void initShell(int a, char * v[]){
 	printf("3) Hay kill. No reapea, solo mata\n");
 	printf("4) Shell hace wait si el proceso NO es background, por eso van a ver a shell blocked si hacen top\n");
 	printf("5) Procesos en background pierden stdout, y pueden perder stdin si lo implementamos, no me parecio necesario\n");
-	printf("6) MEHHHHHHHHHHHH nose, varias pelotudeces mas.\n");
-
-
-	printf("\n Como siempre, puede haber bugs \n");
+	printf("6) Tambien esta sleep ahora, y nose, varias pelotudeces mas.\n");
+	printf("Como siempre, puede haber bugs. Al shell matenlo con exit, no kill(bug de init creo, dps lo veo) \n");
 
 	shell(a,v);
 }
@@ -239,6 +237,7 @@ void shell(int a, char * v[]){
 	__register_program("top", top);
 	__register_program("pstree", pstree);
 	__register_program("kill", kill);
+	__register_program("sleep", daemon1);
 	__register_program("shell", (int (*)(int,char**))shell);
 	__register_program("exit", (int (*)(int,char**))exit);
 	__register_program("waitDead", (int (*)(int,char**))do_nothing);
@@ -267,6 +266,7 @@ void shell(int a, char * v[]){
 	__register_man_page("shell","Opens a new shell.");
 	__register_man_page("exit","Exits from shell.");
 	__register_man_page("kill","-pid Kills a process with pid");
+	__register_man_page("sleep","n Sleep n seconds");
 	__register_man_page("waitDead","Demonstration only: makes shell wait first dead children");
 	
 
