@@ -116,7 +116,6 @@ void setupIDT(){
 //Rutina de atención del teclado
 	setup_IDT_entry (&idt[0x21], 0x08, (dword)&_int_21_hand, ACS_INT, 0);	
 
-	setup_IDT_entry (&idt[0x7F], 0x08, (dword)&_int_7F_hand, ACS_INT, 0);
 //Rutina de atención de escritura y lectura
 	setup_IDT_entry (&idt[0x80], 0x08, (dword)&_int_80_hand, ACS_INT, 0);
 
@@ -271,18 +270,21 @@ Decrementa la ranura de tiempo del proceso actual.
 */
 
 
-void int_20() {
-	Task * task;
-	
-	if ( ticks_to_run )
-		ticks_to_run--;
-	while ( (task = mt_peekfirst_time()) && !task->ticks )
-	{
-		mt_getfirst_time();
-		__ready(task, false); 
+void int_20(int flag) {
+	if(flag == 0)
+		ticks_to_run = 0;
+	else {
+		Task * task;
+		if ( ticks_to_run )
+			ticks_to_run--;
+		while ( (task = mt_peekfirst_time()) && !task->ticks )
+		{
+			mt_getfirst_time();
+			__ready(task, false); 
+		}
+		if ( task )
+			task->ticks--;
 	}
-	if ( task )
-		task->ticks--;
 }
 
 void int_21(){

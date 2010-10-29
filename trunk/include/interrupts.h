@@ -37,7 +37,7 @@ void int_1C();
 void int_1D();
 void int_1E();
 void int_1F();
-void int_20();
+void int_20(int flag);
 void int_21();
 void setupIDT();
 void initializePics();

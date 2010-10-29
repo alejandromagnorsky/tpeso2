@@ -67,8 +67,6 @@ void		_int_20_hand();      /* Timer tick */
 void		_int_21_hand();	     /* Teclado */
 void		_int_80_call(dword rd_wr, size_t fd, void * buffer, size_t count);	     
 void		_int_80_hand(); /* Maneja el read y el write */
-void		_int_7F_hand();
-int			_copy_stack(char * out, char * src, size_t count);
 
 
 int		_read_scancode();
