@@ -20,17 +20,16 @@ get_temp_esp(){
 
 Task *
 getNextTask(){
-	if(ticks_to_run)
-		return mt_curr_task;
-
 	last_task = mt_curr_task;
 	
 	if(last_task != &main_task && last_task->state == CURRENT )
 		__ready(last_task, true);
 
-
-	Task * next = getNextTaskLottery(&ready_q);
-
+	Task * next = NULL;
+	if(ticks_to_run == 0){
+		next = getNextTaskLottery(&ready_q);
+		ticks_to_run = QUANTUM;
+	}
 
 	if(next != NULL){
 		mt_curr_task = next;
@@ -38,8 +37,7 @@ getNextTask(){
 	mt_curr_task->state = CURRENT;
 	mt_curr_task->count++;
 	mt_dequeue(mt_curr_task);
-	ticks_to_run = QUANTUM;
-
+	ready_q.iterations++;
 	return mt_curr_task;
 }
 
@@ -47,7 +45,6 @@ getNextTask(){
 
 Task * 
 getNextTaskRoundRobin(TaskQueue * queue){
-	queue->iterations++;
 	return mt_getlast(queue);
 }
 
@@ -65,8 +62,7 @@ getNextTaskLottery(TaskQueue * queue){
 	for(itr=queue->head; itr != NULL && queue->tail;itr=itr->next)
 		for(tmp=0;tmp<itr->priority;tmp++,i++)
 			if(i == ticket){
-				// Este se agrega
-				queue->iterations++;
+				// Este se agrega				
 				return itr;
 			}
 	return NULL;
