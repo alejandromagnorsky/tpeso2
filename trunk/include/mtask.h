@@ -68,21 +68,11 @@ void		atomic(void);
 void		unatomic(void);
 void		suspend(Task * task);
 void		ready(Task * task);
-
-TaskQueue *	createQueue(char *name);
-void		deleteQueue(TaskQueue * queue);
-bool		waitQueue(TaskQueue *queue);
-bool		waitQueueTimed(TaskQueue * queue, int msecs);
-bool		signalQueue(TaskQueue * queue);
-void		flushQueue(TaskQueue * queue, bool success);
-
-bool		send(Task * to, char * msg, int size);
-bool		receive(Task ** from, char * msg, int * size);
-
-void		pause(void);
 void		yield(void);
 void		delay(int msecs);
 void		exit(int argc, char * argv[]);
 
+bool		send(Task * to, char * msg, int size);
+bool		receive(Task ** from, char * msg, int * size);
 
 #endif
