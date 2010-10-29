@@ -58,7 +58,7 @@ typedef void (*TaskFunc)(int argc, char * argv[]);
 
 
 Task * mt_getAvailableTask( Task tasks[], int size);
-Task *		createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority, int pid);
+Task *		createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priority, int pid);
 Task *		currentTask(void);
 void		deleteTask(Task * task);
 

@@ -665,6 +665,11 @@ _init_stack:
         mov eax, [ebp + 12] ; Puntero a la parte inferior del nuevo stack
         mov esp, eax        ; Cambia al nuevo stack
             
+		mov eax, [ebp+28]	; Pushea los argumentos de la funcion inicial
+		push eax
+		mov eax, [ebp+24]
+		push eax
+
         mov eax, [ebp + 16] ; Funcion para eliminar el task
         push eax            
             

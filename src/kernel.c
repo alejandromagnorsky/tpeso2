@@ -58,7 +58,7 @@ Punto de entrada de C
 /* 'multiboot_info_t' stores data about memory map */
 int kmain(multiboot_info_t * mbd, unsigned int magic) 
 {
-	__asm__("cli");
+	DisableInts();
 
 	initializePics();
     
@@ -99,13 +99,13 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	main_task.priority = 0;
 	main_task.send_queue.name = main_task.name;
 	main_task.ss = _read_ds();
-	main_task.esp = _init_stack(do_nothing, main_task.stack+STACKSIZE-1, exit, INIFL);
+	main_task.esp = _init_stack(do_nothing, main_task.stack+STACKSIZE-1, exit, INIFL, 0, NULL);
 
 
 	ticks_to_run = QUANTUM;
 	mt_curr_task = &main_task;
 
-	__asm__("sti");
+	RestoreInts();
 
 	do_nothing(0, NULL);
 
@@ -184,7 +184,7 @@ memcpy(char * out, char * src, int length){
 
 
 Task *
-createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority, int pid)
+createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priority, int pid)
 {
 	//Task * task;
 	Task * task = mt_getAvailableTask( __taskArray, __MAX_TASKS);
@@ -195,7 +195,7 @@ createTask(TaskFunc func, unsigned stacksize, char * name, unsigned priority, in
 	//task->send_queue.name = StrDup(name);
 
 	task->ss = _read_ds();
-	task->esp = _init_stack(func, task->stack+stacksize-1, exit, INIFL);
+	task->esp = _init_stack(func, task->stack+STACKSIZE-1, exit, INIFL, argc, argv);
 
 	return task;
 }

@@ -15,15 +15,12 @@ void            _lidt (IDTR *idtr);
 void		_mascaraPIC1 (byte mascara);  /* Escribe mascara de PIC1 */
 void		_mascaraPIC2 (byte mascara);  /* Escribe mascara de PIC2 */
 
-void		_Cli(void);        /* Deshabilita interrupciones  */
-void		_Sti(void);	 /* Habilita interrupciones  */
-
 unsigned int	_read_cs();
 unsigned int	_read_ds();
 unsigned int	_read_ss();
 unsigned int	_read_sp();
 unsigned int	_read_edx();
-unsigned int	_init_stack(TaskFunc func, char * stack, TaskFunc exit, unsigned flags);
+unsigned int	_init_stack(TaskFunc func, char * stack, TaskFunc exit, unsigned flags, int argc, char * argv[]);
 
 unsigned int	_read_cr0();
 unsigned int	_read_cr3();
