@@ -241,18 +241,15 @@ void shellManager(int a, char * v[]){
 		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority++;
 	}
 
-
-	printf("Terminales creadas\n");
 	while(1){
 		wait();
 		
-		printf("SHELL DEAD\n");
 		int deadTTY = getDeadTTY(__getProcessNodeByPID(mt_curr_task->pid),10);
-
-		printf("Shell %d killed. Calling shell..\n", deadTTY);
 
 		__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = deadTTY;
 		__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = deadTTY;
+
+		printf("Shell %d killed. Calling shell..", deadTTY+1);
 
 		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority--;
 			shellPID = __forkAndExec(shell, 1, argv);	
