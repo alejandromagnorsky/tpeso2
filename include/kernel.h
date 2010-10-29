@@ -14,7 +14,9 @@
 
 #define OS_PID	0
 #define stdout 1
+#define procStdout (__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD)
 #define stdin 0
+#define procStdin (__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD)
 #define KBUFFER_SIZE 128
 
 #define NULL_STACK		256 			/* tamano de stack para proceso nulo */ 
@@ -79,6 +81,6 @@ int msecs_to_ticks(int msecs);
 int ticks_to_msecs(int ticks);
 
 void free_terminated(void);		/* libera tareas terminadas */
-void do_nothing();		/* funcion del proceso nulo */
+void do_nothing(int argc, char * argv[]);		/* funcion del proceso nulo */
 
 #endif

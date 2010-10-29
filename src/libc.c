@@ -265,7 +265,7 @@ int rand(){
         return acum2%acum1;
 }
 
-void wait(int seconds){
+void sleep(int seconds){
 	int i, lastSec = -1;
 	int actSec = getSeconds();
 

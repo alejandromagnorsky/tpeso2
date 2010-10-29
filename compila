@@ -26,9 +26,10 @@ gcc -g -c ../src/programs/bingo.c -o bingo.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/reboot.c -o reboot.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/history.c -o history.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/top.c -o top.o -fno-builtin -fno-stack-protector
+gcc -g -c ../src/programs/kill.c -o kill.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/pstree.c -o pstree.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/allocator.c -o allocator.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/paging.c -o paging.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/rand.c -o rand.o -fno-builtin -fno-stack-protector -Wall
 gcc -g -c ../src/process.c -o process.o -fno-builtin -fno-stack-protector -Wall
-ld -T ../src/link.ld kstart.o -o kernel.bin kernel.o queue.o scheduler.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o history.o allocator.o paging.o rand.o top.o pstree.o process.o
+ld -T ../src/link.ld kstart.o -o kernel.bin kernel.o queue.o scheduler.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o history.o allocator.o paging.o rand.o top.o pstree.o process.o kill.o

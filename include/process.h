@@ -8,8 +8,12 @@
 #define __PID_MAX 100
 #define __MAX_CHILDS 100
 
+#define __WAITALL -1
+
 typedef struct __ProcessData {
 	int exists;
+	char stdoutFD;
+	char stdinFD;
 	// Task here
 	Task * task;
 } __ProcessData;
@@ -19,6 +23,7 @@ typedef struct __ProcessNode __ProcessNode;
 
 struct __ProcessNode {
 	int pid;
+	int waitpid;
 	__ProcessData * data;			// Process context data
 	__ProcessNode * childs[__MAX_CHILDS];		// NULL terminated by convention
 };
@@ -56,7 +61,9 @@ int __forkProcess( __ProcessNode * p);
 
 void __killProcess( __ProcessNode * p);
 
-void __waitProcess( __ProcessNode * parent);
+void __waitProcess( __ProcessNode * parent, int pid);
+
+int __tryWaitProcess( __ProcessNode * parent, int pid);
 
 void	__processCleaner( __ProcessNode * p);
 
@@ -65,17 +72,22 @@ void __printProcessTree( __ProcessNode * p );
 
 void __printProcessTreeTabs( __ProcessNode * p, int tabs );
 
+void _kill(int pid);
+
+void wait();
+
+int trywait();
+
+void	waitpid(int pid);
 
 void init();
-
-void exit(void);
 
 void __fork();
 
 void __exec(TaskFunc f);
 
 // TESTEO
-int __forkAndExec(TaskFunc f, char * name);
+int __forkAndExec(TaskFunc f, int argc, char * argv[]);
 
 
 
