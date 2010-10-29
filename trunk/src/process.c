@@ -1,4 +1,5 @@
 #include "../include/process.h"
+#include "../include/console.h"
 #include "../include/kernel.h"
 #include "../include/shell.h"
 #include "../include/kasm.h"
@@ -79,29 +80,22 @@ void	waitpid(int pid){
 	__waitProcess(__getProcessNodeByPID(mt_curr_task->pid), pid);
 }
 
+int getpid(){
+	return mt_curr_task->pid;
+}
+
 void init(){
 
-	printf("Init started. Calling shell...\n");
+	__switch_terminal(0);
 
-	char * argv[] = {"shell" , NULL };
-	int shellPID = __forkAndExec(initShell, 1, argv);
+	char * argv[] = {"shellManager" , NULL };
+	int shellPID = __forkAndExec(shellManager, 1, argv);
 
 	__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
 	shellProc->data->task->priority = MAX_PRIO-1;
-
-	while(true){
-		
-		wait();
-		printf("Shell terminated. Calling shell...\n");
-
-
-		char * argv[] = {"shell" , NULL };
-		int shellPID = __forkAndExec(shell, 1, argv);
-
-		__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
-		shellProc->data->task->priority = MAX_PRIO-1;
-
-	}
+	
+	// Meh
+	while(1) wait();
 }
 
 __ProcessNode * getAvailableProcessNode(){
@@ -232,10 +226,11 @@ void __killProcess( __ProcessNode * p){
 void _kill(int pid){
 	DisableInts();
 		__ProcessNode * p = __getProcessNodeByPID(pid);
-		printf("[%s (%d)] Killed\n", p->data->task->name, pid);
-
-		__killProcess(p);	
-		__wakeParent(p);
+		if(p->data != NULL){
+			printf("[%s (%d)] Killed\n", p->data->task->name, pid);
+			__killProcess(p);	
+			__wakeParent(p);
+		} else printf("Process not found\n");
 	RestoreInts();
 }
 

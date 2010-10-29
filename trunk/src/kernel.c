@@ -23,6 +23,10 @@ int getSeconds(){
 }
 
 size_t __read(int fd, void* buffer, size_t count){
+
+	while( fd != stdin || procStdin != __TTY_INDEX)
+		yield();
+
 	int i;
 	int * vec = buffer;
 	for(i = 0; i <= count; i++){
@@ -35,8 +39,11 @@ size_t __read(int fd, void* buffer, size_t count){
 }
 
 size_t __write(int fd, const void* buffer, size_t count){
-	if(fd == procStdout)
-			__write_terminal(buffer,count);
+
+	while( fd != stdout || procStdout != __TTY_INDEX)
+		yield();
+
+	__write_terminal(buffer,count);
 	return count;
 }
 

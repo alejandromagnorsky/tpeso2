@@ -33,11 +33,11 @@ getNextTask(){
 
 	if(next != NULL){
 		mt_curr_task = next;
+		mt_curr_task->state = CURRENT;
+		mt_curr_task->count++;
+		mt_dequeue(mt_curr_task);
+		ready_q.iterations++;
 	}
-	mt_curr_task->state = CURRENT;
-	mt_curr_task->count++;
-	mt_dequeue(mt_curr_task);
-	ready_q.iterations++;
 	return mt_curr_task;
 }
 
