@@ -86,7 +86,6 @@ void paging(){
 	 * 			So, from now on, PDE-X-Y (X > 0) will map physical address of PDE-Y.
 	 * 				E.g.: PDE-1-0 entry will map the physical address of whole PDE-0.
 	 */
-	 
 	for(i=0; i < (PAGE_DIR_QTY * 1024) ; i++)	// 8 page directory entries * 1024 entries each one
 		page_table[i] = (unsigned int)allocator() | U_FLAG | RW_FLAG | P_FLAG;
 	
@@ -118,8 +117,8 @@ void * allocPage(){
 		for(j=0, probe=1; j < 8; j++, probe*=2)
 			if ((__page_status[i] & probe) != probe){	// Page status -> available
 				__page_status[i] |= probe;	// Set free page status as not available.
-				p_dir = i << 22; printf("P_dir: %d\n", p_dir);
-				p_table = j << 12; printf("P_table: %d\n", p_table);
+				p_dir = i << 22;
+				p_table = j << 12;
 				return (void *)(p_dir + p_table);
 			}
 	return (void *)NULL;	
@@ -136,7 +135,15 @@ __Process_pages allocProcess(int pid){
 	return p_pages;
 }
 
-void protect(int pid){
+void breakProtection(){
+	int i;
+	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
+	for(i=0; i < (PAGE_DIR_QTY * 1024); i++)
+		page_table[i] = page_table[i] | P_FLAG;
+}
+
+void protect(){
+	int pid = mt_curr_task->pid;
 	int i, p_dir, p_table;
 	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
 	unsigned int * addr;
@@ -144,6 +151,13 @@ void protect(int pid){
 	// Sets pages as NOT-PRESENT
 	for(i=0; i < (PAGE_DIR_QTY * 1024); i++)
 		page_table[i] = page_table[i] & 0xFFFFFFFE;	// Sets present bit as not present
+	
+	///////////////////////////////////////////////////////
+	// DESPROTEJO TODO PAGE TABLE 1
+	page_table = (unsigned int *)(KERNEL_LIMIT + PAGE_SIZE);
+	for (i=0; i < 1024; i++)
+		page_table[i] = page_table[i] | P_FLAG;	// Sets present bit as not present
+	///////////////////////////////////////////////////////
 	
 	// Set data page of process pid as available
 	p_dir = (unsigned int)__pages_per_process[pid].d_page >> 22;

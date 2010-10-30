@@ -162,8 +162,16 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	main_task.priority = 0;
 	main_task.send_queue.name = main_task.name;
 	main_task.ss = _read_ds();
+	
+	__Process_pages pages = allocProcess(50);
+	main_task.stack = pages.s_page;
+	
 	main_task.esp = _init_stack(do_nothing, main_task.stack+STACKSIZE-1, exit, INIFL, 0, NULL);
 
+	Task * task1 = createTask(printA, 0, NULL, "PRINT A" , 4, 15);
+	mt_enqueue(task1, &ready_q);
+	Task * task2 = createTask(printB, 0, NULL, "PRINT B" , 4, 16);
+	mt_enqueue(task2, &ready_q);
 
 	ticks_to_run = QUANTUM;
 	mt_curr_task = &main_task;
@@ -245,6 +253,28 @@ memcpy(char * out, char * src, int length){
 	}
 }
 
+void printA(int argc, char * argv[]){
+	//	protect(15);
+	setStdout( 0);
+	int i = 0;
+	while(true){
+		i++;
+		if(i % 100000 == 0)
+			printf("%d-", i);
+	}
+	breakProtection();
+}
+
+void printB(int argc, char * argv[]){
+	setStdout( 0);
+	int i = 0;
+	while(true){
+		i++;
+		printf("_");
+		if(i % 5000000 == 0)
+			printf("%d\n\n\n\n", i);
+	}
+}
 
 Task *
 createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priority, int pid)
@@ -256,7 +286,7 @@ createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priorit
 	task->stack = pages.s_page;
 	
 	task->priority = priority;
-	memcpy(task->name, name,strlen(name)+1);
+	memcpy(task->name, name, strlen(name)+1);
 	task->count = 0;
 	task->pid = pid;
 	//task->send_queue.name = StrDup(name);

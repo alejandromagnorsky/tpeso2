@@ -286,6 +286,7 @@ void shell(int a, char * v[]){
 	int shelltty = __getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD;
 
 	printf("\n");
+		
 	__printSystemSymbol();
 	
 	__init_history();
