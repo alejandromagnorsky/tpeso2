@@ -271,6 +271,7 @@ void shell(int a, char * v[]){
 	__register_program("top", top);
 	__register_program("pstree", pstree);
 	__register_program("kill", guikill);
+	__register_program("ps", guips);
 	__register_program("sleep", daemon1);
 	__register_program("shell", (int (*)(int,char**))shell);
 	__register_program("exit", (int (*)(int,char**))exit);
@@ -301,6 +302,7 @@ void shell(int a, char * v[]){
 	__register_man_page("exit","Exits from shell.");
 	__register_man_page("kill","-pid Kills a process with pid");
 	__register_man_page("sleep","n Sleep n seconds");
+	__register_man_page("ps","Snapshot of current processes");
 	__register_man_page("waitDead","Demonstration only: makes shell wait first dead children");
 	
 
