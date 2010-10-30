@@ -43,8 +43,8 @@
 	|	Page table 7	|
 	===================== <--------\     <---- 0x408000: Beginning of available memory.
 	|					|			|
--------------------------------		|
--------------------------------		|---> "Usable" memory.
+-----------------------------		|
+-----------------------------		|---> "Usable" memory.
 	|					|			|
 	|___________________| <--------/     <---- End of memory.
 	
@@ -61,9 +61,21 @@
 #define P_FLAG 1
 #define RW_FLAG 2
 #define U_FLAG 4
+#define MAX_PROCESSES 16
 
 void paging();
 void * map(void * phys_addr);
+
+char __page_status[PAGE_QTY/8];
+char __active_pages[PAGE_QTY/8];
+
+typedef struct {
+	int pid;		// Process id
+	void * d_page;	// Data page
+	void * s_page;	// Stack page
+} __Process_pages;
+
+__Process_pages __pages_per_process[MAX_PROCESSES];
 
 /* Fin includes temporal. */
 /* ****************************************************************************************************** */
@@ -82,7 +94,7 @@ void paging(){
 	 * 	can use only 8 page directory entries to map all the memory.
 	 */
 	 
-	/* FILLS ENTRIES IN PAGE DIRECTORY */	
+	/* FILLS ENTRIES IN PAGE DIRECTORY */
 	for(i=0; i < PAGE_SIZE/4; i++)
 		page_dir[i] = ((unsigned int)page_table + i * PAGE_SIZE) | U_FLAG | RW_FLAG | P_FLAG;
 		
@@ -95,27 +107,84 @@ void paging(){
 	 * 				E.g.: PDE-1-0 entry will map the physical address of whole PDE-0.
 	 */
 	 
-	for(i=0; i < (PAGE_DIR_QTY * 1024) ; i++)	// 8 page directories * 1024 entries each one
+	for(i=0; i < (PAGE_DIR_QTY * 1024) ; i++)	// 8 page directory entries * 1024 entries each one
 		page_table[i] = (unsigned int)allocator() | U_FLAG | RW_FLAG | P_FLAG;
 	
-/*	// TESTING 0x500000 ptr WORKS!!!!!!!!
-	unsigned int * ptr1 = (unsigned int *)((0x400000 + 4096 + 4*256));
-	unsigned int aux = *ptr1;
-	*ptr1 = aux & 0xFFFFFFF0;
-*/
-
+	/* Initializes __page_status and __active_pages */
+	for (i=0; i < (PAGE_QTY/8); i++){
+		__page_status[i] = 0x00;
+		__active_pages[i] = 0xFF;
+	}
+	
 	/* CR3 now points to the page directory. */
 	_write_cr3( (unsigned int)page_dir );
 	
 	/* Enables paging by setting 31th bit of CR0 in 1. */
 	_write_cr0( _read_cr0() | 0x80000000 );	// bitwise-OR CR0 with 1000 0000 ... 0000 -> Enables paging bit.
 	
+
 }
 
 /*	******************************************************************************************************
 	***************************************** ( 3 ) ******************************************************
 	******************************************************************************************************
 */
+
+void * allocPage(){
+	int i, p_dir, p_table;
+	unsigned int * ans;
+	unsigned char j, probe;
+	for (i=0; i < (PAGE_QTY/8); i++)
+		for(j=0, probe=1; j < 8; j++, probe*=2)
+			if ((__page_status[i] & probe) != probe){	// Page status -> available
+				__page_status[i] |= probe;	// Set free page status as not available.
+				p_dir = i << 22; printf("P_dir: %d\n", p_dir);
+				p_table = j << 12; printf("P_table: %d\n", p_table);
+				return (void *)(p_dir + p_table);
+			}
+	return (void *)NULL;	
+}
+
+__Process_pages allocProcess(int pid){
+	__Process_pages p_pages;
+	void * d_page = allocPage();
+	void * s_page = allocPage();
+	p_pages.pid = pid;
+	p_pages.d_page = d_page;
+	p_pages.s_page = s_page;
+	__pages_per_process[pid] = p_pages;
+	return p_pages;
+}
+
+void protect(int pid){
+	int i, p_dir, p_table;
+	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
+	unsigned int * addr;
+	
+	// Sets pages as NOT-PRESENT
+	for(i=0; i < (PAGE_DIR_QTY * 1024); i++)
+		page_table[i] = page_table[i] & 0xFFFFFFFE;	// Sets present bit as not present
+	
+	// Set data page of process pid as available
+	p_dir = (unsigned int)__pages_per_process[pid].d_page >> 22;
+	p_table = (unsigned int)__pages_per_process[pid].d_page << 10 >> 22;
+	addr = (unsigned int *)(PAGE_SIZE * p_dir + p_table * 4);
+	*addr = *addr | P_FLAG;
+	
+	// Set stack page of process pid as available
+	p_dir = (unsigned int)__pages_per_process[pid].s_page >> 22;
+	p_table = (unsigned int)__pages_per_process[pid].s_page << 10 >> 22;
+	addr = (unsigned int *)(PAGE_SIZE * p_dir + p_table * 4);
+	*addr = *addr | P_FLAG;
+}
+
+// ELIMINAR CUANDO ELIMINE LOS TESTEOS DE ALLOCPAGE EN SHELL
+void test(){
+	char p = 254;
+	__page_status[0] &= p;
+}
+/////////////////////////////////////////////////////////////
+
 void * map(void * phys_addr){
 	return NULL;
 /* // NO BORRO ESTO POR LAS DUDAS

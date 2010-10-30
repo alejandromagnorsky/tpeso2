@@ -1,10 +1,15 @@
 #include "../include/allocator.h"
 
+#define MEMORY_BASE 0				// Memory start.
+#define KERNEL_LIMIT 0x400000		// Kernel size.
+#define MEMORY_LIMIT 0x2000000		// Total memory size (32M).
+#define PAGE_SIZE 0x1000			// Page size (4K).
+#define PAGE_QTY ((MEMORY_LIMIT - MEMORY_BASE) / PAGE_SIZE)	// Size of usable memory in pages.
+
 char page_map [PAGE_QTY/8];	// Page frames information.
 unsigned short byte_ptr = 0;		// Pointer to the first available set of pages with at
 									// least one available page in memory (A BYTE in BITMAP).
 char bit_ptr = 0;					// Index of the first empty bit in a byte (A BIT IN A 'byte_ptr').
-
 
 /* 'binaryPow':
   		Returns 2 to the power of 'exp'.
