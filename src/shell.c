@@ -1,8 +1,10 @@
 #include "../include/shell.h"
 #include "../include/process.h"
+#include "../include/syscall.h"
 #include "../include/interrupts.h"
 #include "../include/programs.h"
 #include "../include/console.h"
+#include "../include/kc.h"
 
 int __register_program(char * descriptor, int (*execute)(int argc, char * argv[])){
 	__executable exec;
@@ -206,6 +208,26 @@ int getDeadTTY(__ProcessNode * manager, int maxTTY){
 	return -1;
 }
 
+
+void init(){
+
+	setStdout(0);
+	setStdin(0);
+/*
+	char * argv[] = {"terminal-manager" , NULL };
+
+	setPrio(3);
+	int shellPID = forkexec(shellManager, 1, argv);
+	setPrio(4);
+	*/
+
+	printf("Entre!\n");
+	
+	// Meh
+	while(1)
+		wait();
+}
+
 void shellManager(int a, char * v[]){
 
 	__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = 0;	
@@ -217,12 +239,12 @@ void shellManager(int a, char * v[]){
 	int i;
 	for(i=0;i<10;i++){
 
-		__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = i;
-		__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = i;
+		setStdout(i);
+		setStdin(i);
 
-		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority--;
-			shellPID = __forkAndExec(shell, 1, argv);	
-		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority++;
+		setPrio(2);
+			shellPID = forkexec(shell, 1, argv);	
+		setPrio(3);
 	}
 
 	while(1){
@@ -231,16 +253,17 @@ void shellManager(int a, char * v[]){
 		int deadTTY = getDeadTTY(__getProcessNodeByPID(mt_curr_task->pid),10);
 
 		DisableInts();
-		__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = __TTY_INDEX;
+
+		setStdout(__TTY_INDEX);
 		printf("TTY %d killed. Calling terminal.. \n", deadTTY+1);
 		RestoreInts();
 
-		__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = deadTTY;
-		__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = deadTTY;
+		setStdout(deadTTY);
+		setStdin(deadTTY);
 
-		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority--;
-			shellPID = __forkAndExec(shell, 1, argv);	
-		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority++;
+		setPrio(2);
+			shellPID = forkexec(shell, 1, argv);	
+		setPrio(3);
 	}
 }
 
@@ -251,60 +274,8 @@ void shell(int a, char * v[]){
 	printf("\n");
 	__printSystemSymbol();
 	
-	__QTY_PROGRAMS = 0;
 	__init_history();
 
-	// Register of various functions
-	__register_program("echo", echo);
-	__register_program("clear", clear);
-	__register_program("help", help);
-	__register_program("man", man);
-	__register_program("gcc", gcc);
-	__register_program("tty", tty);
-	__register_program("time", time);
-	__register_program("arnold", arnold);
-	__register_program("mkexc", mkexc);
-	__register_program("cpuid", call_cpuid);
-	__register_program("bingo", bingo);
-	__register_program("reboot", reboot);
-	__register_program("history", history);
-	__register_program("top", top);
-	__register_program("pstree", pstree);
-	__register_program("kill", guikill);
-	__register_program("ps", guips);
-	__register_program("sleep", daemon1);
-	__register_program("shell", (int (*)(int,char**))shell);
-	__register_program("exit", (int (*)(int,char**))exit);
-	__register_program("waitDead", (int (*)(int,char**))do_nothing);
-
-	__register_man_page("echo","Prints the string received.");
-	__register_man_page("clear", "Clears the screen.");
-	__register_man_page("help", "Prints all the possible commands known.");
-	__register_man_page("man", "Shows the manual for any program");
-	__register_man_page("gcc", "GNU C Compiler.");
-	__register_man_page("tty", "Interface for changing terminal settings. \n"  \
-				"Arguments: \n" \
-				" \t [-s terminal_index] | _Switches terminal \n"
-				" \t [-l] | Switches to the _last terminal \n"
-				" \t [-n] | Switches to the _next terminal \n"
-				" \t [-ss string] | Changes the _system _symbol to string \n"
-				" \t [-c foreground background] | Changes terminal _color.");
-	__register_man_page("time","Prints hour, minutes and seconds.");
-	__register_man_page("arnold","Arnold Alois Schwarzenegger, as John Matrix in Commando(1985)");
-	__register_man_page("mkexc","Generates the exception corresponding to the second argument." \
-				     "Valid values are numbers between 0 and 31.");
-	__register_man_page("bingo","Bingo for two players.");
-	__register_man_page("reboot","Reboots the system.");
-	__register_man_page("history","Shows the shell history.");
-	__register_man_page("top","Shows CPU resources.");
-	__register_man_page("pstree","Shows process tree.");
-	__register_man_page("shell","Opens a new shell.");
-	__register_man_page("exit","Exits from shell.");
-	__register_man_page("kill","-pid Kills a process with pid");
-	__register_man_page("sleep","n Sleep n seconds");
-	__register_man_page("ps","Snapshot of current processes");
-	__register_man_page("waitDead","Demonstration only: makes shell wait first dead children");
-	
 
 	// Data for user input
 	char user_input[MAX_ARGUMENT_LENGTH*MAX_ARGUMENTS + 1];
@@ -358,7 +329,7 @@ void shell(int a, char * v[]){
 						// Take off stdout if background process
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = background ? -1 : shelltty;	
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = background ? -1 : shelltty;	
-						int pid = __forkAndExec((TaskFunc)exec->execute, argc, argv);
+						int pid = forkexec((TaskFunc)exec->execute, argc, argv);
 						// Reset stdout after fork
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = shelltty;
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = shelltty;	

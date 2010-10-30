@@ -1,4 +1,4 @@
-#include "../../include/process.h"
+#include "../../include/syscall.h"
 
 int guips(int argc, char * argv[]){
 	if( argc == 2 )

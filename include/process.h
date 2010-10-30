@@ -75,32 +75,34 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs );
 
 __ProcessNode * __getParentProcessNode(__ProcessNode * p, __ProcessNode * c);
 
-int kill(int pid);
-
-void wait();
-
-int getpid();
-
-int getppid();
-
-void ps( int pid );
-
-void __ps( __ProcessNode * p );
-
-int trywait();
-
-void	waitpid(int pid);
-
-void init();
-
-void __fork();
-
-void __exec(TaskFunc f);
-
-// TESTEO
-int __forkAndExec(TaskFunc f, int argc, char * argv[]);
 
 
+
+void init();	// Defined in shell.c
+
+
+
+void __setStdout(int fd);
+
+void __setStdin(int fd);
+
+void __setPriority(int p);
+
+void __ps( int pid);
+
+int __forkexec(TaskFunc f, int argc, char * argv[]);
+
+int __trywait();
+
+void __wait();
+
+void	__waitpid(int pid);
+
+int __getppid();
+
+int __getpid();
+
+int __kill(int pid);
 
 
 

@@ -4,15 +4,15 @@ rm -rf *
 nasm -f aout ../src/libasm.asm -o libasm.o
 nasm -f aout ../src/kstart.asm -o kstart.o
 
-gcc -g -c ../src/kernel.c -o kernel.o -fno-builtin -fno-stack-protector
+gcc -g -c ../src/kernel.c -o kernel.o -fno-builtin -fno-stack-protector 
 gcc -g -c ../src/queue.c -o queue.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/scheduler.c -o scheduler.o -fno-builtin -fno-stack-protector
-gcc -g -c ../src/libc.c  -o libc.o -fno-builtin -fno-stack-protector
+gcc -g -c ../src/libc.c  -o libc.o -fno-builtin -fno-stack-protector 
 gcc -g -c ../src/video.c -o video.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/keyboard.c -o keyboard.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/console.c -o console.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/interrupts.c -o interrupts.o -fno-builtin -fno-stack-protector
-gcc -g -c ../src/shell.c -o shell.o -fno-builtin
+gcc -g -c ../src/shell.c -o shell.o -fno-builtin 
 gcc -g -c ../src/programs/cpuid.c -o cpuid.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/time.c -o time.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/tty.c -o tty.o -fno-builtin -fno-stack-protector
@@ -35,5 +35,6 @@ gcc -g -c ../src/allocator.c -o allocator.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/paging.c -o paging.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/rand.c -o rand.o -fno-builtin -fno-stack-protector -Wall
 gcc -g -c ../src/process.c -o process.o -fno-builtin -fno-stack-protector -Wall
+gcc -g -c ../src/syscall.c -o syscall.o -fno-builtin -fno-stack-protector -Wall
 
-ld -T ../src/link.ld kstart.o -o kernel.bin kernel.o queue.o scheduler.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o history.o allocator.o paging.o rand.o top.o pstree.o process.o kill.o daemon1.o ps.o
+ld -T ../src/link.ld kstart.o -o kernel.bin kernel.o queue.o scheduler.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o history.o allocator.o paging.o rand.o top.o pstree.o process.o kill.o daemon1.o ps.o syscall.o

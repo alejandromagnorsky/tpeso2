@@ -94,8 +94,7 @@ EXTERN 	getNextTask
 EXTERN 	get_temp_esp
 EXTERN 	load_esp
 EXTERN 	save_esp
-EXTERN __write
-EXTERN __read
+EXTERN int80Handler
 EXTERN getAscii
 EXTERN __keyboard_buffer
 EXTERN __KBUFFER_PTR_
@@ -606,21 +605,13 @@ _int_80_hand:
 	push dword edx	; Pushea los parámetros de read y write
 	push dword ecx
 	push dword ebx
+	push dword eax
 
-	cmp	eax, 0
-	je	read
-	jmp	write
+	call int80Handler
 
-continue:
 	leave
 	sti
 	iret
-read:
-	call	__read
-	jmp	continue
-write:
-	call	__write
-	jmp	continue
 
 
 

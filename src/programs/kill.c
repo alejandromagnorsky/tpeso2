@@ -1,5 +1,5 @@
-#include "../../include/process.h"
 #include "../../include/kc.h"
+#include "../../include/syscall.h"
 
 int guikill(int argc, char * argv[]){
 
