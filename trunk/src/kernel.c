@@ -141,7 +141,7 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	//*ptr = 5;
 	//printf("%d\n", *ptr);
 	paging();
-	//printf("%d\n", *ptr);
+	//printf("%d\n", allocPage());
 
 	initializeShellCommands();
 
@@ -168,7 +168,7 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	mt_curr_task = &main_task;
 
 	RestoreInts();
-
+	
 	do_nothing(0, NULL);
 
 	return 0;

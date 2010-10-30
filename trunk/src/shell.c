@@ -233,7 +233,21 @@ void shellManager(int a, char * v[]){
 	__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = 0;	
 
 	sysinfo();
-
+	
+	// TEST ALLOCPAGE /////////////////////////////////
+	unsigned int * ptr = (unsigned int *)allocPage();
+	printf("1. %d\n", *ptr);
+	ptr = (unsigned int *)allocPage();
+	printf("2. %d\n", *ptr);
+	ptr = (unsigned int *)allocPage();
+	printf("3. %d\n", *ptr);
+	ptr = (unsigned int *)allocPage();
+	printf("4. %d\n", *ptr);
+	test();
+	ptr = (unsigned int *)allocPage();
+	printf("5. %d\n", *ptr);
+	//////////////////////////////////////////////////
+	
 	char * argv[] = {"terminal" , NULL };
 	int shellPID;
 	int i;
