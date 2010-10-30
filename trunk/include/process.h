@@ -67,12 +67,13 @@ int __tryWaitProcess( __ProcessNode * parent, int pid);
 
 void	__processCleaner( __ProcessNode * p);
 
+void __wakeParent(__ProcessNode * child);
 
 void __printProcessTree( __ProcessNode * p );
 
 void __printProcessTreeTabs( __ProcessNode * p, int tabs );
 
-void _kill(int pid);
+int kill(int pid);
 
 void wait();
 

@@ -88,7 +88,7 @@ void init(){
 
 	__switch_terminal(0);
 
-	char * argv[] = {"shellManager" , NULL };
+	char * argv[] = {"terminal-manager" , NULL };
 	int shellPID = __forkAndExec(shellManager, 1, argv);
 
 	__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
@@ -118,11 +118,17 @@ __ProcessNode * __getProcessNodeByPID( int pid ){
 	return __processTree+pid;
 }
 
+
+// Reparent element!
 void __addChild( __ProcessNode * parent, __ProcessNode * child){
 	int i;
 	for(i=0;i<__MAX_CHILDS;i++)
 		if(parent->childs[i] == NULL){
-			parent->childs[i] = child;
+			DisableInts();
+				parent->childs[i] = child;
+				if(child->data->task->state == TERMINATED )
+					__wakeParent(child);
+			RestoreInts();
 			return;
 		}
 }
@@ -218,20 +224,24 @@ void __killProcess( __ProcessNode * p){
 	for(i=0;i<__MAX_CHILDS;i++)	
 		if(p->childs[i] != NULL){
 			__killProcess(p->childs[i]);
-			__addChild(init, p->childs[i]);		
+			__ProcessNode * child = p->childs[i];
+
+			// Parent must lose child before reparenting
 			p->childs[i] = NULL;
+			__addChild(init, child);	
 		}
 }
 
-void _kill(int pid){
+int kill(int pid){
 	DisableInts();
 		__ProcessNode * p = __getProcessNodeByPID(pid);
 		if(p->data != NULL){
-			printf("[%s (%d)] Killed\n", p->data->task->name, pid);
 			__killProcess(p);	
 			__wakeParent(p);
-		} else printf("Process not found\n");
+			return pid;
+		}
 	RestoreInts();
+	return -1;
 }
 
 

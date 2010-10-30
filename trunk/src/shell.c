@@ -4,10 +4,6 @@
 #include "../include/programs.h"
 #include "../include/console.h"
 
-__callFunc callFunc;
-
-int shellIndex = 1;
-
 int __register_program(char * descriptor, int (*execute)(int argc, char * argv[])){
 	__executable exec;
 	exec.descriptor = descriptor;
@@ -197,14 +193,9 @@ void __getShellArguments(char * ans){
 }
 
 int getDeadTTY(__ProcessNode * manager, int maxTTY){
-
-	int i;
-	int j;
-
+	int i,j;
 	for(j=0;j<maxTTY;j++){
-
 		int exists = 0;
-		
 		for(i=0;i<__MAX_CHILDS;i++)
 			if(manager->childs[i] != NULL)
 				if(manager->childs[i]->data->stdinFD == j)
@@ -212,23 +203,16 @@ int getDeadTTY(__ProcessNode * manager, int maxTTY){
 		if(!exists)
 			return j;
 	}
-					
-
 	return -1;
 }
 
 void shellManager(int a, char * v[]){
 
-	shellIndex = 0;
 	__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = 0;	
 
 	sysinfo();
-	printf("NO MATEN SHELLS POR AHORA. Usen tty -s o F1,F2.. etc para cambiar terminal\n");
 
-	printf("LALA %d\n", __TTY_INDEX);
-
-
-	char * argv[] = {"shell" , NULL };
+	char * argv[] = {"terminal" , NULL };
 	int shellPID;
 	int i;
 	for(i=0;i<10;i++){
@@ -246,10 +230,13 @@ void shellManager(int a, char * v[]){
 		
 		int deadTTY = getDeadTTY(__getProcessNodeByPID(mt_curr_task->pid),10);
 
+		DisableInts();
+		__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = __TTY_INDEX;
+		printf("TTY %d killed. Calling terminal.. \n", deadTTY+1);
+		RestoreInts();
+
 		__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = deadTTY;
 		__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = deadTTY;
-
-		printf("Shell %d killed. Calling shell..", deadTTY+1);
 
 		__getProcessNodeByPID(mt_curr_task->pid)->data->task->priority--;
 			shellPID = __forkAndExec(shell, 1, argv);	
@@ -283,7 +270,7 @@ void shell(int a, char * v[]){
 	__register_program("history", history);
 	__register_program("top", top);
 	__register_program("pstree", pstree);
-	__register_program("kill", kill);
+	__register_program("kill", guikill);
 	__register_program("sleep", daemon1);
 	__register_program("shell", (int (*)(int,char**))shell);
 	__register_program("exit", (int (*)(int,char**))exit);
@@ -366,9 +353,6 @@ void shell(int a, char * v[]){
 						int dpid = trywait();
 						printf("[ (%d) Done ]\n", dpid);
 					} else {
-						callFunc.argc = argc;
-						callFunc.argv = argv;
-						callFunc.execute = exec->execute;
 						// Take off stdout if background process
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = background ? -1 : shelltty;	
 						__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = background ? -1 : shelltty;	
@@ -379,8 +363,6 @@ void shell(int a, char * v[]){
 						if(!background)
 							waitpid(pid);
 						else printf("[ OK ] %d \n", pid);
-					
-
 						background = 0;
 					}
 			   }
