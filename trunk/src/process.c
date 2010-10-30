@@ -68,34 +68,20 @@ void __initializeProcessTree(){
 	mt_enqueue(__processTree->data->task, &ready_q);
 }
 
-int trywait(){
+int __trywait(){
 	return __tryWaitProcess(__getProcessNodeByPID(mt_curr_task->pid), __WAITALL);
 }
 
-void wait(){
+void __wait(){
 	__waitProcess(__getProcessNodeByPID(mt_curr_task->pid), __WAITALL);
 }
 
-void	waitpid(int pid){
+void	__waitpid(int pid){
 	__waitProcess(__getProcessNodeByPID(mt_curr_task->pid), pid);
 }
 
-int getpid(){
+int __getpid(){
 	return mt_curr_task->pid;
-}
-
-void init(){
-
-	__switch_terminal(0);
-
-	char * argv[] = {"terminal-manager" , NULL };
-	int shellPID = __forkAndExec(shellManager, 1, argv);
-
-	__ProcessNode * shellProc = __getProcessNodeByPID(shellPID);
-	shellProc->data->task->priority = MAX_PRIO-1;
-	
-	// Meh
-	while(1) wait();
 }
 
 __ProcessNode * getAvailableProcessNode(){
@@ -158,6 +144,15 @@ int __tryWaitProcess( __ProcessNode * parent, int pid){
 	return -1;
 }
 
+
+void __setStdout(int fd){
+	__getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD = fd;
+}
+
+void __setStdin(int fd){
+	__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = fd;
+}
+
 void __waitProcess( __ProcessNode * parent, int pid){
 	__tryWaitProcess(parent,pid);	
 
@@ -169,8 +164,8 @@ void __waitProcess( __ProcessNode * parent, int pid){
 }
 
 
-int getppid(){
-	__ProcessNode * p = __getParentProcessNode(__getProcessNodeByPID(0),__getProcessNodeByPID(getpid()));
+int __getppid(){
+	__ProcessNode * p = __getParentProcessNode(__getProcessNodeByPID(0),__getProcessNodeByPID(mt_curr_task->pid));
 	return p != NULL ? p->pid : -1;
 }
 
@@ -236,7 +231,7 @@ void __killProcess( __ProcessNode * p){
 		}
 }
 
-int kill(int pid){
+int __kill(int pid){
 	DisableInts();
 		__ProcessNode * p = __getProcessNodeByPID(pid);
 		if(p->data != NULL){
@@ -304,20 +299,22 @@ void __printProcessData( __ProcessNode * p ){
 }
 
 
-void ps( int pid ) {
-
-	printf("PID\tTTY\tName\n");
-	__ps(__getProcessNodeByPID(pid));
+void __setPriority(int p){
+	setPriority(mt_curr_task,p);
 }
 
-void __ps( __ProcessNode * p ){
+//	printf("PID\tTTY\tName\n");
+
+void __ps( int pid ){
+
+	__ProcessNode * p = __getProcessNodeByPID(pid);
 
 	printf("%d\ttty%d\t%s\n", p->pid, p->data->stdoutFD+1,p->data->task->name);
 
 	int i;
 	for(i=0;i<__MAX_CHILDS;i++)	
 		if(p->childs[i] != NULL)
-			__ps(p->childs[i]);
+			__ps(p->childs[i]->pid);
 }
 
 
@@ -359,8 +356,7 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs ){
 
 
 
-// TEST !!!
-int __forkAndExec(TaskFunc f, int argc, char * argv[]){
+int __forkexec(TaskFunc f, int argc, char * argv[]){
 
 	DisableInts();
 

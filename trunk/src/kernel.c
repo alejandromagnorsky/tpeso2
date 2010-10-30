@@ -6,6 +6,7 @@
 #include "../include/multiboot.h"
 #include "../include/process.h"
 #include "../include/console.h"
+#include "../include/programs.h"
 
 
 void __printMemoryMap(multiboot_info_t * mbd);
@@ -40,6 +41,10 @@ size_t __read(int fd, void* buffer, size_t count){
 
 size_t __write(int fd, const void* buffer, size_t count){
 
+	// If it is disabled
+	if(procStdout == -1)
+		return 0;
+
 	while( fd != stdout || procStdout != __TTY_INDEX)
 		yield();
 
@@ -47,8 +52,63 @@ size_t __write(int fd, const void* buffer, size_t count){
 	return count;
 }
 
+void initializeShellCommands(){
 
-void func(int a);
+	__QTY_PROGRAMS = 0;
+	
+	// Register of various functions
+	__register_program("echo", echo);
+	__register_program("clear", clear);
+	__register_program("help", help);
+	__register_program("man", man);
+	__register_program("gcc", gcc);
+	__register_program("tty", tty);
+	__register_program("time", time);
+	__register_program("arnold", arnold);
+	__register_program("mkexc", mkexc);
+	__register_program("cpuid", call_cpuid);
+	__register_program("bingo", bingo);
+	__register_program("reboot", reboot);
+	__register_program("history", history);
+	__register_program("top", top);
+	__register_program("pstree", pstree);
+	__register_program("kill", guikill);
+	__register_program("ps", guips);
+	__register_program("sleep", daemon1);
+	__register_program("shell", (int (*)(int,char**))shell);
+	__register_program("exit", (int (*)(int,char**))exit);
+	__register_program("waitDead", (int (*)(int,char**))do_nothing);
+
+	__register_man_page("echo","Prints the string received.");
+	__register_man_page("clear", "Clears the screen.");
+	__register_man_page("help", "Prints all the possible commands known.");
+	__register_man_page("man", "Shows the manual for any program");
+	__register_man_page("gcc", "GNU C Compiler.");
+	__register_man_page("tty", "Interface for changing terminal settings. \n"  \
+				"Arguments: \n" \
+				" \t [-s terminal_index] | _Switches terminal \n"
+				" \t [-l] | Switches to the _last terminal \n"
+				" \t [-n] | Switches to the _next terminal \n"
+				" \t [-ss string] | Changes the _system _symbol to string \n"
+				" \t [-c foreground background] | Changes terminal _color.");
+	__register_man_page("time","Prints hour, minutes and seconds.");
+	__register_man_page("arnold","Arnold Alois Schwarzenegger, as John Matrix in Commando(1985)");
+	__register_man_page("mkexc","Generates the exception corresponding to the second argument." \
+				     "Valid values are numbers between 0 and 31.");
+	__register_man_page("bingo","Bingo for two players.");
+	__register_man_page("reboot","Reboots the system.");
+	__register_man_page("history","Shows the shell history.");
+	__register_man_page("top","Shows CPU resources.");
+	__register_man_page("pstree","Shows process tree.");
+	__register_man_page("shell","Opens a new shell.");
+	__register_man_page("exit","Exits from shell.");
+	__register_man_page("kill","-pid Kills a process with pid");
+	__register_man_page("sleep","n Sleep n seconds");
+	__register_man_page("ps","Snapshot of current processes. -e for all processes");
+	__register_man_page("waitDead","Demonstration only: makes shell wait first dead children");
+	
+}
+
 
 /**********************************************
 kmain() 
@@ -82,6 +142,8 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	//printf("%d\n", *ptr);
 	paging();
 	//printf("%d\n", *ptr);
+
+	initializeShellCommands();
 
 	_srand(1295872354);
 
@@ -403,9 +465,7 @@ llama al scheduler.
 --------------------------------------------------------------------------------
 */
 
-void		
-setPriority(Task * task, unsigned priority)
-{
+void	setPriority(Task * task, unsigned priority){
 	TaskQueue * queue;
 
 	DisableInts();
