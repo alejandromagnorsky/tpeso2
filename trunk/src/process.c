@@ -169,6 +169,10 @@ void __waitProcess( __ProcessNode * parent, int pid){
 }
 
 
+int getppid(){
+	__ProcessNode * p = __getParentProcessNode(__getProcessNodeByPID(0),__getProcessNodeByPID(getpid()));
+	return p != NULL ? p->pid : -1;
+}
 
 __ProcessNode * __getParentProcessNode(__ProcessNode * p, __ProcessNode * c){
 
@@ -297,6 +301,23 @@ void __printProcessData( __ProcessNode * p ){
 		if(p->data->task->state != TERMINATED)
 			printf("%s", p->data->task->name);
 		else printf("Dead");
+}
+
+
+void ps( int pid ) {
+
+	printf("PID\tTTY\tName\n");
+	__ps(__getProcessNodeByPID(pid));
+}
+
+void __ps( __ProcessNode * p ){
+
+	printf("%d\ttty%d\t%s\n", p->pid, p->data->stdoutFD+1,p->data->task->name);
+
+	int i;
+	for(i=0;i<__MAX_CHILDS;i++)	
+		if(p->childs[i] != NULL)
+			__ps(p->childs[i]);
 }
 
 

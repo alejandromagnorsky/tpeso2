@@ -73,11 +73,19 @@ void __printProcessTree( __ProcessNode * p );
 
 void __printProcessTreeTabs( __ProcessNode * p, int tabs );
 
+__ProcessNode * __getParentProcessNode(__ProcessNode * p, __ProcessNode * c);
+
 int kill(int pid);
 
 void wait();
 
 int getpid();
+
+int getppid();
+
+void ps( int pid );
+
+void __ps( __ProcessNode * p );
 
 int trywait();
 

@@ -24,6 +24,7 @@ int daemon1(int argc, char * argv[]);
 
 int top(int argc, char * argv[]);
 int guikill(int argc, char * argv[]);
+int guips(int argc, char * argv[]);
 int pstree(int argc, char * argv[]);
 
 
