@@ -28,7 +28,7 @@ struct Task{
 
 	int pid;				// Useful for knowing its wrapper process
 
-	char stack[STACKSIZE];
+	char * stack;
 	int	ss;
 	int	esp;
 	

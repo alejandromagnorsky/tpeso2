@@ -7,6 +7,7 @@
 #include "../include/process.h"
 #include "../include/console.h"
 #include "../include/programs.h"
+#include "../include/paging.h"
 
 
 void __printMemoryMap(multiboot_info_t * mbd);
@@ -250,6 +251,10 @@ createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priorit
 {
 	//Task * task;
 	Task * task = mt_getAvailableTask( __taskArray, __MAX_TASKS);
+	
+	__Process_pages pages = allocProcess(pid);
+	task->stack = pages.s_page;
+	
 	task->priority = priority;
 	memcpy(task->name, name,strlen(name)+1);
 	task->count = 0;
