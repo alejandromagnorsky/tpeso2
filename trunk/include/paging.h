@@ -22,6 +22,4 @@ void paging();
 void * map(void * phys_addr);
 void * allocPage();
 void protect();
-__Process_pages allocProcess(int pid);
-
-void * aux;
+__Process_pages * allocProcess(int pid);

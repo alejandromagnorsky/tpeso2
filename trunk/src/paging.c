@@ -91,9 +91,13 @@ void paging(){
 	for(i=0; i < (PAGE_DIR_QTY * 1024) ; i++)	// 8 page directory entries * 1024 entries each one
 		page_table[i] = (unsigned int)allocator() | U_FLAG | RW_FLAG | P_FLAG;
 	
-	/* Initializes __page_status and __active_pages */
+	/* Initializes __page_status and __active_pages
+	 *		First 1024 + 8 pages (kernel and first 8 entries y page table 1, respectively)
+	 *	are set as not available.
+	 */
 	for (i=0; i < (PAGE_QTY/8); i++){
-		__page_status[i] = /*( i < 512 ) ? 0xFF :*/ 0x00;
+		if ( i <= 128 )
+			__page_status[i] = 0xFF;
 		__active_pages[i] = 0xFF;
 	}
 	
@@ -112,21 +116,17 @@ void paging(){
 */
 
 void * allocPage(){
-	int i, p_dir, p_table, p_number;
+	int i, p_number;
 	unsigned int * ans;
 	unsigned char j, probe;
 	for (i=0; i < (PAGE_QTY/8); i++){
 		for(j=0, probe=1; j < 8; j++, probe*=2){
 			if ((__page_status[i] & probe) != probe){	// Page status -> available
 				__page_status[i] |= probe;	// Set free page status as not available.
-				p_dir = i << 22;
-				p_table = j << 12;
 				p_number = i * 8 + j;
-				printf("Page number: %d\n", (p_number % 1024) );
-				printf("Page virtual address: %d\n", ((p_number / 1024) << 22) + ((p_number % 1024) << 12));
-				//printf("Page_number: %d\n", p_dir + p_table);
-				aux = (void *)(((p_number / 1024) << 22) + ((p_number % 1024) << 12));
-				printf("PRINT ADENTRO DE ALLOCPAGE: AUX: %d\n", aux);
+				printf("Page number: %d\n", p_number );
+				//printf("Page virtual address: %d\n", ((p_number / 1024) << 22) + ((p_number % 1024) << 12));
+				//aux = (void *)(((p_number / 1024) << 22) + ((p_number % 1024) << 12));
 				return (void *)(((p_number / 1024) << 22) + ((p_number % 1024) << 12));
 			}
 		}
@@ -135,7 +135,7 @@ void * allocPage(){
 	return (void *)NULL;
 }
 
-__Process_pages allocProcess(int pid){
+__Process_pages * allocProcess(int pid){
 	__Process_pages p_pages;
 	void * d_page = allocPage();
 	void * s_page = allocPage();
@@ -144,10 +144,10 @@ __Process_pages allocProcess(int pid){
 	p_pages.pid = pid;
 	p_pages.d_page = d_page;
 	p_pages.s_page = s_page;
-	printf("PRINT IN ALLOCPROCESS********************************************\nDATA PAGE: %d\n", (unsigned int)p_pages.d_page);
-	printf("STACK PAGE: %d\nEND PRINT IN ALLOCPROCESS******************\n", (unsigned int)p_pages.s_page);
 	__pages_per_process[pid] = p_pages;
-	return p_pages;
+	//printf("PRINT IN ALLOCPROCESS********************************************\nDATA PAGE: %d\n", p_pages.d_page);
+	//printf("STACK PAGE: %d\nEND PRINT IN ALLOCPROCESS******************\n", p_pages.s_page);
+	return &__pages_per_process[pid];
 }
 
 void breakProtection(){
@@ -164,13 +164,13 @@ void protect(){
 	unsigned int s_page_dir, s_page_table, d_page_dir, d_page_table;
 	
 	d_page_dir = (unsigned int)__pages_per_process[pid].d_page >> 22;
-	d_page_table = (unsigned int)__pages_per_process[pid].d_page << 10 >> 22;
+	d_page_table = ((unsigned int)__pages_per_process[pid].d_page << 10) >> 22;
 	d_page_number = d_page_dir * 1024 + d_page_table;
 
 	s_page_dir = (unsigned int)__pages_per_process[pid].s_page >> 22;
-	s_page_table = (unsigned int)__pages_per_process[pid].s_page << 10 >> 22;
+	s_page_table = ((unsigned int)__pages_per_process[pid].s_page << 10) >> 22;
 	s_page_number = s_page_dir * 1024 + s_page_table;
-*/	
+*/
 	// Protects kernel's 4M memory chunk
 	// 4 is a magic number here
 	//for(i=4; i < 1024; i++)
