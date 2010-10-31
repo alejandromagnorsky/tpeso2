@@ -151,19 +151,21 @@ void protect(){
 	d_page_dir = (unsigned int)__pages_per_process[pid].d_page >> 22;
 	d_page_table = (unsigned int)__pages_per_process[pid].d_page << 10 >> 22;
 	d_page_number = d_page_dir * 1024 + d_page_table;
+
 	s_page_dir = (unsigned int)__pages_per_process[pid].s_page >> 22;
 	s_page_table = (unsigned int)__pages_per_process[pid].s_page << 10 >> 22;
 	s_page_number = s_page_dir * 1024 + s_page_table;
 	
 	// Protects kernel's 4M memory chunk
-//	for(i=0; i < PAGE_SIZE / 4; i++)
-//		page_table[i] = page_table[i] & 0xFFFFFFFE;
+	// 4 is a magic number here
+	for(i=4; i < 1024; i++)
+		page_table[i] = page_table[i] & 0xFFFFFFFE;
 	
 	// Skips first eight entries in page table 1 and continues protecting
-	for(i=1024 + 8; i < PAGE_DIR_QTY * 1024; i++)
+/*	for(i=1024 + 8; i < PAGE_DIR_QTY * 1024; i++)
 		if ( i != d_page_number && i != s_page_number)
-			page_table[i] = page_table[i] & 0xFFFFFFFE;
-	
+			page_table[i] = page_table[i] & 0xFFFFFFFE;*/
+
 }
 
 // ELIMINAR CUANDO ELIMINE LOS TESTEOS DE ALLOCPAGE EN SHELL
