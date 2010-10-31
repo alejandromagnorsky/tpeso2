@@ -1,5 +1,7 @@
 #include "../include/paging.h"
 #include "../include/kasm.h"
+#include "../include/shell.h"
+#include "../include/console.h"
 
 
 /* ******************************************************************************************************
@@ -91,7 +93,7 @@ void paging(){
 	
 	/* Initializes __page_status and __active_pages */
 	for (i=0; i < (PAGE_QTY/8); i++){
-		__page_status[i] = /*( i < 1024 ) ? 0x01 :*/ 0x00;
+		__page_status[i] = /*( i < 512 ) ? 0xFF :*/ 0x00;
 		__active_pages[i] = 0xFF;
 	}
 	
@@ -110,27 +112,40 @@ void paging(){
 */
 
 void * allocPage(){
-	int i, p_dir, p_table;
+	int i, p_dir, p_table, p_number;
 	unsigned int * ans;
 	unsigned char j, probe;
-	for (i=0; i < (PAGE_QTY/8); i++)
-		for(j=0, probe=1; j < 8; j++, probe*=2)
+	for (i=0; i < (PAGE_QTY/8); i++){
+		for(j=0, probe=1; j < 8; j++, probe*=2){
 			if ((__page_status[i] & probe) != probe){	// Page status -> available
 				__page_status[i] |= probe;	// Set free page status as not available.
 				p_dir = i << 22;
 				p_table = j << 12;
-				return (void *)(p_dir + p_table);
+				p_number = i * 8 + j;
+				printf("Page number: %d\n", (p_number % 1024) );
+				printf("Page virtual address: %d\n", ((p_number / 1024) << 22) + ((p_number % 1024) << 12));
+				//printf("Page_number: %d\n", p_dir + p_table);
+				aux = (void *)(((p_number / 1024) << 22) + ((p_number % 1024) << 12));
+				printf("PRINT ADENTRO DE ALLOCPAGE: AUX: %d\n", aux);
+				return (void *)(((p_number / 1024) << 22) + ((p_number % 1024) << 12));
 			}
-	return (void *)NULL;	
+		}
+	}
+	printf("Returning null\n");
+	return (void *)NULL;
 }
 
 __Process_pages allocProcess(int pid){
 	__Process_pages p_pages;
 	void * d_page = allocPage();
 	void * s_page = allocPage();
+	//printf("PRINT IN ALLOCPROCESS*********************\nDATA PAGE: %d\n", (unsigned int)d_page);
+	//printf("STACK PAGE: %d\n", (unsigned int)s_page);
 	p_pages.pid = pid;
 	p_pages.d_page = d_page;
 	p_pages.s_page = s_page;
+	printf("PRINT IN ALLOCPROCESS********************************************\nDATA PAGE: %d\n", (unsigned int)p_pages.d_page);
+	printf("STACK PAGE: %d\nEND PRINT IN ALLOCPROCESS******************\n", (unsigned int)p_pages.s_page);
 	__pages_per_process[pid] = p_pages;
 	return p_pages;
 }
@@ -143,7 +158,7 @@ void breakProtection(){
 }
 
 void protect(){
-	int pid = mt_curr_task->pid;
+/*	int pid = mt_curr_task->pid;
 	int i, p_dir, p_table, d_page_number, s_page_number;
 	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
 	unsigned int s_page_dir, s_page_table, d_page_dir, d_page_table;
@@ -155,11 +170,11 @@ void protect(){
 	s_page_dir = (unsigned int)__pages_per_process[pid].s_page >> 22;
 	s_page_table = (unsigned int)__pages_per_process[pid].s_page << 10 >> 22;
 	s_page_number = s_page_dir * 1024 + s_page_table;
-	
+*/	
 	// Protects kernel's 4M memory chunk
 	// 4 is a magic number here
-	for(i=4; i < 1024; i++)
-		page_table[i] = page_table[i] & 0xFFFFFFFE;
+	//for(i=4; i < 1024; i++)
+	//	page_table[i] = page_table[i] & 0xFFFFFFFE;
 	
 	// Skips first eight entries in page table 1 and continues protecting
 /*	for(i=1024 + 8; i < PAGE_DIR_QTY * 1024; i++)
