@@ -56,6 +56,8 @@ GLOBAL  _outport
 GLOBAL  _mascaraPIC1,_mascaraPIC2
 GLOBAL  _debug
 
+EXTERN	breakProtection
+EXTERN	protect
 EXTERN	int_00
 EXTERN	int_01
 EXTERN	int_02
@@ -532,6 +534,7 @@ _int_20_call:
 
 _int_20_hand:				; Handler de INT 20h (Timer tick)
 	cli
+	call breakProtection
 	pushad
 	
 	mov 	eax, esp		
@@ -550,6 +553,11 @@ _int_20_hand:				; Handler de INT 20h (Timer tick)
 	push 	eax
 	call 	load_esp		; Devuelve el esp de la nueva tarea
 	pop		ebx
+	
+	push	eax
+	call	protect
+	pop		eax
+
 	mov		esp, eax		; Cambia el stack
 
 	mov	al, 20h				; Envio de EOI generico al PIC
