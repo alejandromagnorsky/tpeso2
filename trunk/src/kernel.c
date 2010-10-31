@@ -154,7 +154,7 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	mt_initTaskQueue( &blocked_q, "Blocked Queue");
 
 	// Inicializar procesos e init (aca esta el fork inicial)
-	__initializeProcessSubSystem();
+	//__initializeProcessSubSystem();
 
 	/* Inicializar proceso principal */
 	memcpy(main_task.name,"Main Task", 10);
@@ -170,8 +170,6 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 
 	Task * task1 = createTask(printA, 0, NULL, "PRINT A" , 4, 15);
 	mt_enqueue(task1, &ready_q);
-	Task * task2 = createTask(printB, 0, NULL, "PRINT B" , 4, 16);
-	mt_enqueue(task2, &ready_q);
 
 	ticks_to_run = QUANTUM;
 	mt_curr_task = &main_task;
@@ -255,19 +253,28 @@ memcpy(char * out, char * src, int length){
 
 void printA(int argc, char * argv[]){
 	int i = 0;
+
+	__HISTORY_INDEX = 34;
+
+//	breakProtection();
+	printf("%d\n", __HISTORY_INDEX);
+//	char * vidmem = (char*) 0xb8000;
+//	vidmem[4] = 'A';
 	while(true){
-	i++;
+	/*i++;
 		if(i % 100000 == 0)
-			printf("%d-", i);
+			printf("%d-", i);*/
 	}
 }
 
 void printB(int argc, char * argv[]){
 	int i = 0;
+//	char * vidmem = (char*) 0xb8000;
+//	vidmem[2]= 'B';
 	while(true){
-		i++;
+		/*i++;
 		if(i % 500000 == 0)
-			printf("%d\n\n\n\n", i);
+			printf("%d\n\n\n\n", i);*/
 	}
 }
 

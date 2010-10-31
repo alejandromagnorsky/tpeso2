@@ -211,7 +211,7 @@ int getDeadTTY(__ProcessNode * manager, int maxTTY){
 
 void init(){
 
-	//setStdout(0);
+	setStdout(0);
 	//setStdin(0);
 /*
 	char * argv[] = {"terminal-manager" , NULL };
@@ -221,7 +221,7 @@ void init(){
 	setPrio(4);
 	*/
 
-	//printf("Entre!\n");
+	printf("Entre!\n");
 	
 	// Meh
 	while(1)

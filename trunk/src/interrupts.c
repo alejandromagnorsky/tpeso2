@@ -184,11 +184,17 @@ void int_0C(){
 }
 
 void int_0D(){
-	printf("General protection\n");
+	breakProtection();
+	char * vidmem = (char*) 0xb8000;
+	vidmem[8] = 'G';
+	//printf("General protection\n");
 }
 
 void int_0E(){
-	printf("Page fault.\n");
+	breakProtection();
+	char * vidmem = (char*) 0xb8000;
+	vidmem[6] = 'P';
+//	printf("Page fault.\n");
 }
 
 void int_0F(){

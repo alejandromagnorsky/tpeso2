@@ -534,8 +534,8 @@ _int_20_call:
 
 _int_20_hand:				; Handler de INT 20h (Timer tick)
 	cli
-	call breakProtection
 	pushad
+	call breakProtection
 	
 	mov 	eax, esp		
 	push 	eax			
@@ -554,9 +554,10 @@ _int_20_hand:				; Handler de INT 20h (Timer tick)
 	call 	load_esp		; Devuelve el esp de la nueva tarea
 	pop		ebx
 	
-	push	eax
-	;call	protect
-	pop		eax
+
+	pushad
+	call	protect
+	popad
 
 	mov		esp, eax		; Cambia el stack
 
@@ -617,7 +618,7 @@ _int_80_hand:
 
 	call breakProtection	
 	
-	call int80Handler
+		call int80Handler
 	
 	call protect
 
