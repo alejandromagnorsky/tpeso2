@@ -555,7 +555,7 @@ _int_20_hand:				; Handler de INT 20h (Timer tick)
 	pop		ebx
 	
 	push	eax
-	call	protect
+	;call	protect
 	pop		eax
 
 	mov		esp, eax		; Cambia el stack
@@ -615,7 +615,11 @@ _int_80_hand:
 	push dword ebx
 	push dword eax
 
+	call breakProtection	
+	
 	call int80Handler
+	
+	call protect
 
 	leave
 	sti

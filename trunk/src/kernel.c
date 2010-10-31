@@ -43,11 +43,11 @@ size_t __read(int fd, void* buffer, size_t count){
 size_t __write(int fd, const void* buffer, size_t count){
 
 	// If it is disabled
-	if(procStdout == -1)
-		return 0;
+//	if(procStdout == -1)
+//		return 0;
 
-	while( fd != stdout || procStdout != __TTY_INDEX)
-		yield();
+//	while( fd != stdout || procStdout != __TTY_INDEX)
+//		yield();
 
 	__write_terminal(buffer,count);
 	return count;
@@ -254,25 +254,21 @@ memcpy(char * out, char * src, int length){
 }
 
 void printA(int argc, char * argv[]){
-//	protect(15);
-//setStdout( 0);
-int i = 0;
-while(true){
-i++;
-//if(i % 100000 == 0)
-//printf("%d-", i);
-}
-//breakProtection();
+	int i = 0;
+	while(true){
+	i++;
+		if(i % 100000 == 0)
+			printf("%d-", i);
+	}
 }
 
 void printB(int argc, char * argv[]){
-//setStdout( 0);
-int i = 0;
-while(true){
-i++;
-//if(i % 500000 == 0)
-//printf("%d\n\n\n\n", i);
-}
+	int i = 0;
+	while(true){
+		i++;
+		if(i % 500000 == 0)
+			printf("%d\n\n\n\n", i);
+	}
 }
 
 Task *
