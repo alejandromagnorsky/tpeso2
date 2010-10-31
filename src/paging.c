@@ -91,7 +91,7 @@ void paging(){
 	
 	/* Initializes __page_status and __active_pages */
 	for (i=0; i < (PAGE_QTY/8); i++){
-		__page_status[i] = 0x00;
+		__page_status[i] = /*( i < 1024 ) ? 0x01 :*/ 0x00;
 		__active_pages[i] = 0xFF;
 	}
 	
@@ -144,32 +144,26 @@ void breakProtection(){
 
 void protect(){
 	int pid = mt_curr_task->pid;
-	int i, p_dir, p_table;
+	int i, p_dir, p_table, d_page_number, s_page_number;
 	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
-	unsigned int * addr;
+	unsigned int s_page_dir, s_page_table, d_page_dir, d_page_table;
 	
-	// Sets pages as NOT-PRESENT
-	for(i=0; i < (PAGE_DIR_QTY * 1024); i++)
-		page_table[i] = page_table[i] & 0xFFFFFFFE;	// Sets present bit as not present
+	d_page_dir = (unsigned int)__pages_per_process[pid].d_page >> 22;
+	d_page_table = (unsigned int)__pages_per_process[pid].d_page << 10 >> 22;
+	d_page_number = d_page_dir * 1024 + d_page_table;
+	s_page_dir = (unsigned int)__pages_per_process[pid].s_page >> 22;
+	s_page_table = (unsigned int)__pages_per_process[pid].s_page << 10 >> 22;
+	s_page_number = s_page_dir * 1024 + s_page_table;
 	
-	///////////////////////////////////////////////////////
-	// DESPROTEJO TODO PAGE TABLE 1
-	page_table = (unsigned int *)(KERNEL_LIMIT + PAGE_SIZE);
-	for (i=0; i < 1024; i++)
-		page_table[i] = page_table[i] | P_FLAG;	// Sets present bit as not present
-	///////////////////////////////////////////////////////
+	// Protects kernel's 4M memory chunk
+//	for(i=0; i < PAGE_SIZE / 4; i++)
+//		page_table[i] = page_table[i] & 0xFFFFFFFE;
 	
-	// Set data page of process pid as available
-	p_dir = (unsigned int)__pages_per_process[pid].d_page >> 22;
-	p_table = (unsigned int)__pages_per_process[pid].d_page << 10 >> 22;
-	addr = (unsigned int *)(PAGE_SIZE * p_dir + p_table * 4);
-	*addr = *addr | P_FLAG;
+	// Skips first eight entries in page table 1 and continues protecting
+	for(i=1024 + 8; i < PAGE_DIR_QTY * 1024; i++)
+		if ( i != d_page_number && i != s_page_number)
+			page_table[i] = page_table[i] & 0xFFFFFFFE;
 	
-	// Set stack page of process pid as available
-	p_dir = (unsigned int)__pages_per_process[pid].s_page >> 22;
-	p_table = (unsigned int)__pages_per_process[pid].s_page << 10 >> 22;
-	addr = (unsigned int *)(PAGE_SIZE * p_dir + p_table * 4);
-	*addr = *addr | P_FLAG;
 }
 
 // ELIMINAR CUANDO ELIMINE LOS TESTEOS DE ALLOCPAGE EN SHELL

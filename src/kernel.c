@@ -254,26 +254,25 @@ memcpy(char * out, char * src, int length){
 }
 
 void printA(int argc, char * argv[]){
-	//	protect(15);
-	setStdout( 0);
-	int i = 0;
-	while(true){
-		i++;
-		if(i % 100000 == 0)
-			printf("%d-", i);
-	}
-	breakProtection();
+//	protect(15);
+//setStdout( 0);
+int i = 0;
+while(true){
+i++;
+//if(i % 100000 == 0)
+//printf("%d-", i);
+}
+//breakProtection();
 }
 
 void printB(int argc, char * argv[]){
-	setStdout( 0);
-	int i = 0;
-	while(true){
-		i++;
-		printf("_");
-		if(i % 5000000 == 0)
-			printf("%d\n\n\n\n", i);
-	}
+//setStdout( 0);
+int i = 0;
+while(true){
+i++;
+//if(i % 500000 == 0)
+//printf("%d\n\n\n\n", i);
+}
 }
 
 Task *
