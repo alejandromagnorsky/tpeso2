@@ -163,8 +163,12 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	main_task.send_queue.name = main_task.name;
 	main_task.ss = _read_ds();
 	
-	__Process_pages pages = allocProcess(50);
+	__Process_pages pages;
+	pages = allocProcess(50);
 	main_task.stack = pages.s_page;
+	printf("PAGES PID: %d\n", pages.pid);
+	printf("GLOBAL VARIABLE AUX WITH STACK PAGE: %d\n", aux);
+	printf("ALLOC PROCESS 50\n\tSTACK PAGE: %d\n\tDATA_PAGE: %d\n", pages.s_page, pages.d_page);
 	
 	main_task.esp = _init_stack(do_nothing, main_task.stack+STACKSIZE-1, exit, INIFL, 0, NULL);
 
@@ -284,7 +288,10 @@ createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priorit
 	//Task * task;
 	Task * task = mt_getAvailableTask( __taskArray, __MAX_TASKS);
 	
+	printf("ALLOCPROCESS EN CREATETASK:\n");
 	__Process_pages pages = allocProcess(pid);
+	printf("D: %d\n", pages.d_page);
+	printf("S: %d\n", pages.s_page);
 	task->stack = pages.s_page;
 	
 	task->priority = priority;

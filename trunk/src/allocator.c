@@ -1,4 +1,6 @@
 #include "../include/allocator.h"
+#include "../include/shell.h"
+#include "../include/console.h"
 
 #define MEMORY_BASE 0				// Memory start.
 #define KERNEL_LIMIT 0x400000		// Kernel size.
