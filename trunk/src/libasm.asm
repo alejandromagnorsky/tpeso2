@@ -535,34 +535,40 @@ _int_20_call:
 _int_20_hand:				; Handler de INT 20h (Timer tick)
 	cli
 	pushad
+
+	pushad
 	call breakProtection
+	popad
 	
-	mov 	eax, esp		
-	push 	eax			
-	call	save_esp		; Guarda la posicion actual del esp en la tarea actual
-	pop 	eax
 
-	call	get_temp_esp	
-	mov		esp, eax		; Cambia al stack del main task para realizar ahi las operaciones del scheduler
-	
-	push    ecx				; Guarda el registro que le pasa como parametro la _int_20_call
-	call    int_20    		
-	pop		ecx
 
-	call 	getNextTask		; Obtiene la siguiente tarea segun el algoritmo de scheduler
-	push 	eax
-	call 	load_esp		; Devuelve el esp de la nueva tarea
-	pop		ebx
+		mov 	eax, esp		
+		push 	eax			
+		call	save_esp		; Guarda la posicion actual del esp en la tarea actual
+		pop 	eax
+
+		call	get_temp_esp	
+		mov		esp, eax		; Cambia al stack del main task para realizar ahi las operaciones del scheduler
 	
+		push    ecx				; Guarda el registro que le pasa como parametro la _int_20_call
+		call    int_20    		
+		pop		ecx
+
+		call 	getNextTask		; Obtiene la siguiente tarea segun el algoritmo de scheduler
+		push 	eax
+		call 	load_esp		; Devuelve el esp de la nueva tarea
+		pop		ebx
+	
+		mov		esp, eax		; Cambia el stack
+
+		mov	al, 20h				; Envio de EOI generico al PIC
+		out	20h, al
+
+
 
 	pushad
 	call	protect
 	popad
-
-	mov		esp, eax		; Cambia el stack
-
-	mov	al, 20h				; Envio de EOI generico al PIC
-	out	20h, al
 
 	popad                    		
 
@@ -616,11 +622,15 @@ _int_80_hand:
 	push dword ebx
 	push dword eax
 
-	call breakProtection	
+	pushad
+	;call breakProtection	
+	popad
 	
 	call int80Handler
 	
-	call protect
+	pushad
+	;call protect
+	popad
 
 	leave
 	sti

@@ -64,10 +64,12 @@ void paging(){
 	 * 	As we are working on a (virtual) 32M-memory hardware, we
 	 * 	can use only 8 page directory entries to map all the memory.
 	 */
+	int allo = 0;
 	 
 	/* FILLS ENTRIES IN PAGE DIRECTORY */
-	for(i=0; i < PAGE_SIZE/4; i++)
-		page_dir[i] = ((unsigned int)page_table + i * PAGE_SIZE) | U_FLAG | RW_FLAG | P_FLAG;
+	for(i=0; i < PAGE_SIZE/4; i++,allo+=4096)
+//		page_dir[i] = ((unsigned int)page_table + i * PAGE_SIZE) | U_FLAG | RW_FLAG | P_FLAG;
+		page_dir[i] = allo | U_FLAG | RW_FLAG | P_FLAG;
 		
 	/* FILLS ENTRIES IN EVERY PAGE TABLE */
 	/* 		- 1st page table maps the whole kernel's 4M memory chunk.
@@ -113,7 +115,6 @@ void * allocPage(){
 			}
 		}
 	}
-	printf("Returning null\n");
 	return (void *)NULL;
 }
 
@@ -130,10 +131,9 @@ __Process_pages * allocProcess(int pid){
 
 void breakProtection(){
 	int i;
-	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
-	for(i=0; i < PAGE_DIR_QTY * 1024; i++)
+	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT - PAGE_SIZE);
+	for(i=0; i < (PAGE_DIR_QTY+1) * 1024; i++)
 		page_table[i] = page_table[i] | P_FLAG;
-
 }
 
 void protect(){
@@ -158,9 +158,9 @@ void protect(){
 	//	page_table[i] = page_table[i] & 0xFFFFFFFE;
 	
 	// Skips first eight entries in page table 1 and continues protecting
-	//for(i=1024 + 8; i < PAGE_DIR_QTY * 1024; i++)
-	//	if ( i != d_page_number && i != s_page_number)
-	//		page_table[i] = page_table[i] & 0xFFFFFFFE;
+	for(i=1024+8; i < PAGE_DIR_QTY * 1024; i++)
+		if ( i != d_page_number && i != s_page_number)
+			page_table[i] = page_table[i] & 0xFFFFFFFE;
 
 }
 
