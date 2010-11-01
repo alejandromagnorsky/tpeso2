@@ -109,7 +109,6 @@ void * allocPage(){
 			if ((__page_status[i] & probe) != probe){	// Page status -> available
 				__page_status[i] |= probe;	// Set free page status as not available.
 				p_number = i * 8 + j;
-				printf("Page number: %d\n", p_number );
 				return (void *)(((p_number / 1024) << 22) + ((p_number % 1024) << 12));
 			}
 		}
@@ -138,7 +137,7 @@ void breakProtection(){
 }
 
 void protect(){
-	int pid = 15;//mt_curr_task->pid;
+	int pid = mt_curr_task->pid;
 	int i, p_dir, p_table, d_page_number, s_page_number;
 	unsigned int s_page_dir, s_page_table, d_page_dir, d_page_table;
 	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
@@ -155,13 +154,13 @@ void protect(){
 */
 	// Protects kernel's 4M memory chunk
 	// 4 is a magic number here
-	//for(i=4; i < 1024; i++)
+	//for(i=4; i < 1023; i++)
 	//	page_table[i] = page_table[i] & 0xFFFFFFFE;
 	
 	// Skips first eight entries in page table 1 and continues protecting
-	for(i=1024 + 8; i < PAGE_DIR_QTY * 1024; i++)
-		if ( i != d_page_number && i != s_page_number)
-			page_table[i] = page_table[i] & 0xFFFFFFFE;
+	//for(i=1024 + 8; i < PAGE_DIR_QTY * 1024; i++)
+	//	if ( i != d_page_number && i != s_page_number)
+	//		page_table[i] = page_table[i] & 0xFFFFFFFE;
 
 }
 

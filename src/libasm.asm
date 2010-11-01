@@ -618,7 +618,7 @@ _int_80_hand:
 
 	call breakProtection	
 	
-		call int80Handler
+	call int80Handler
 	
 	call protect
 
