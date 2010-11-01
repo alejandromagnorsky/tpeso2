@@ -45,9 +45,6 @@ size_t __write(int fd, const void* buffer, size_t count){
 	if(procStdout == -1)
 		return 0;
 
-//	while( fd != stdout || procStdout != __TTY_INDEX)
-//		yield();
-
 
 	int tmp = __TTY_INDEX;
 	if(procStdout == __TTY_INDEX)
