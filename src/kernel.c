@@ -87,6 +87,7 @@ void initializeShellCommands(){
 	__register_program("shell", (int (*)(int,char**))shell);
 	__register_program("exit", (int (*)(int,char**))exit);
 	__register_program("waitDead", (int (*)(int,char**))do_nothing);
+	__register_program("getJoke", getJoke);
 
 	__register_man_page("echo","Prints the string received.");
 	__register_man_page("clear", "Clears the screen.");
@@ -115,6 +116,7 @@ void initializeShellCommands(){
 	__register_man_page("sleep","n Sleep n seconds");
 	__register_man_page("ps","Snapshot of current processes. -e for all processes");
 	__register_man_page("waitDead","Demonstration only: makes shell wait first dead children");
+	__register_man_page("getJoke","Get a joke from the jokes server. Use a number between 0 and 9");
 	
 }
 
