@@ -8,7 +8,6 @@
 #define MAX_PROCESSES 500
 
 char __page_status[PAGE_QTY/8];
-char __active_pages[PAGE_QTY/8];
 
 typedef struct {
 	int pid;		// Process id
@@ -19,7 +18,6 @@ typedef struct {
 __Process_pages __pages_per_process[MAX_PROCESSES];
 
 void paging();
-void * map(void * phys_addr);
 void * allocPage();
 void protect();
 __Process_pages * allocProcess(int pid);

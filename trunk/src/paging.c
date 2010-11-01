@@ -9,7 +9,6 @@
 	COSAS PARA TERMINAR DE PAGING.C:
 		1)  Cuando esto esté mas avanzoado, hacer que se cargue el tamaño de la memoria dinamicamente
 			y se pagine en función de eso.
-		3) Terminar la función MAP().
 		
 
    ******************************************************************************************************
@@ -53,21 +52,11 @@
    ******************************************************************************************************
    ****************************************************************************************************** */
 
-
-/* ****************************************************************************************************** */
-/* ****************************************************************************************************** */
-
-// INCLUDES TEMPORAL
-
-/* Fin includes temporal. */
-/* ****************************************************************************************************** */
-/* ****************************************************************************************************** */
-
 /* PAGING:
 	- enables paging unit.
 */
 void paging(){
-	unsigned int i, cr0;
+	unsigned int i;
 	unsigned int * page_dir = (unsigned int *)((KERNEL_LIMIT - PAGE_SIZE) & 0xFFFFF000);	// page_dir is the last page in kernel's memory chunk.
 	unsigned int * page_table = (unsigned int *)((unsigned int)page_dir + PAGE_SIZE);
 	
@@ -92,14 +81,11 @@ void paging(){
 		page_table[i] = (unsigned int)allocator() | U_FLAG | RW_FLAG | P_FLAG;
 	
 	/* Initializes __page_status and __active_pages
-	 *		First 1024 + 8 pages (kernel and first 8 entries y page table 1, respectively)
+	 *		First 1024 + 8 pages (kernel and first 8 entries in page table 1, respectively)
 	 *	are set as not available.
 	 */
-	for (i=0; i < (PAGE_QTY/8); i++){
-		if ( i <= 128 )
-			__page_status[i] = 0xFF;
-		__active_pages[i] = 0xFF;
-	}
+	for (i=0; i < (PAGE_QTY/8); i++)
+		__page_status[i] = ( i <= 128 ) ? 0xFF : 0x00;
 	
 	/* CR3 now points to the page directory. */
 	_write_cr3( (unsigned int)page_dir );
@@ -117,7 +103,6 @@ void paging(){
 
 void * allocPage(){
 	int i, p_number;
-	unsigned int * ans;
 	unsigned char j, probe;
 	for (i=0; i < (PAGE_QTY/8); i++){
 		for(j=0, probe=1; j < 8; j++, probe*=2){
@@ -125,8 +110,6 @@ void * allocPage(){
 				__page_status[i] |= probe;	// Set free page status as not available.
 				p_number = i * 8 + j;
 				printf("Page number: %d\n", p_number );
-				//printf("Page virtual address: %d\n", ((p_number / 1024) << 22) + ((p_number % 1024) << 12));
-				//aux = (void *)(((p_number / 1024) << 22) + ((p_number % 1024) << 12));
 				return (void *)(((p_number / 1024) << 22) + ((p_number % 1024) << 12));
 			}
 		}
@@ -139,33 +122,32 @@ __Process_pages * allocProcess(int pid){
 	__Process_pages p_pages;
 	void * d_page = allocPage();
 	void * s_page = allocPage();
-	//printf("PRINT IN ALLOCPROCESS*********************\nDATA PAGE: %d\n", (unsigned int)d_page);
-	//printf("STACK PAGE: %d\n", (unsigned int)s_page);
 	p_pages.pid = pid;
 	p_pages.d_page = d_page;
 	p_pages.s_page = s_page;
 	__pages_per_process[pid] = p_pages;
-	//printf("PRINT IN ALLOCPROCESS********************************************\nDATA PAGE: %d\n", p_pages.d_page);
-	//printf("STACK PAGE: %d\nEND PRINT IN ALLOCPROCESS******************\n", p_pages.s_page);
 	return &__pages_per_process[pid];
 }
 
 void breakProtection(){
 	int i;
 	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
-	for(i=0; i < (PAGE_DIR_QTY * 1024); i++)
+	for(i=0; i < PAGE_DIR_QTY * 1024; i++)
 		page_table[i] = page_table[i] | P_FLAG;
+
 }
 
 void protect(){
-/*	int pid = mt_curr_task->pid;
+	int pid = 15;//mt_curr_task->pid;
 	int i, p_dir, p_table, d_page_number, s_page_number;
-	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
 	unsigned int s_page_dir, s_page_table, d_page_dir, d_page_table;
+	unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
 	
-	d_page_dir = (unsigned int)__pages_per_process[pid].d_page >> 22;
-	d_page_table = ((unsigned int)__pages_per_process[pid].d_page << 10) >> 22;
-	d_page_number = d_page_dir * 1024 + d_page_table;
+	d_page_number = (((unsigned int)__pages_per_process[pid].d_page >> 22) * 1024) + (((unsigned int)__pages_per_process[pid].d_page << 10) >> 22);
+	s_page_number = (((unsigned int)__pages_per_process[pid].s_page >> 22) * 1024) + (((unsigned int)__pages_per_process[pid].s_page << 10) >> 22);
+/*	//d_page_dir = (unsigned int)__pages_per_process[pid].d_page >> 22;
+	//d_page_table = ((unsigned int)__pages_per_process[pid].d_page << 10) >> 22;
+	//d_page_number = d_page_dir * 1024 + d_page_table;
 
 	s_page_dir = (unsigned int)__pages_per_process[pid].s_page >> 22;
 	s_page_table = ((unsigned int)__pages_per_process[pid].s_page << 10) >> 22;
@@ -177,9 +159,9 @@ void protect(){
 	//	page_table[i] = page_table[i] & 0xFFFFFFFE;
 	
 	// Skips first eight entries in page table 1 and continues protecting
-/*	for(i=1024 + 8; i < PAGE_DIR_QTY * 1024; i++)
+	for(i=1024 + 8; i < PAGE_DIR_QTY * 1024; i++)
 		if ( i != d_page_number && i != s_page_number)
-			page_table[i] = page_table[i] & 0xFFFFFFFE;*/
+			page_table[i] = page_table[i] & 0xFFFFFFFE;
 
 }
 
@@ -189,24 +171,3 @@ void test(){
 	__page_status[0] &= p;
 }
 /////////////////////////////////////////////////////////////
-
-void * map(void * phys_addr){
-	return NULL;
-/* // NO BORRO ESTO POR LAS DUDAS
-	int byte_ptr, bit_ptr;
-	for(byte_ptr = 0; byte_ptr < (PAGE_QTY/32) && pages[byte_ptr] == 0xFFFFFFFF; byte_ptr++);
-	
-	if(byte_ptr == (PAGE_QTY/32)) return NULL;	// No page available.
-	
-	for(bit_ptr = 1; (~pages[byte_ptr] & bit_ptr) == 0; byte_ptr *= 2);
-	
-	unsigned int phys_base = (unsigned int)phys_addr & 0xFFFFF000;
-	int phys_offset = (unsigned int)phys_addr & 0xFFF;
-	
-	unsigned int * virtual_addr = 0;
-	int page_table = ((byte_ptr*32) + bit_ptr) / 1024;
-	int page_frame = ((byte_ptr*32) + bit_ptr) % 1024;
-*/
-	
-}
-

@@ -32,7 +32,7 @@ gcc -g -c ../src/programs/ps.c -o ps.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/pstree.c -o pstree.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/daemon1.c -o daemon1.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/allocator.c -o allocator.o -fno-builtin -fno-stack-protector
-gcc -g -c ../src/paging.c -o paging.o -fno-builtin -fno-stack-protector 
+gcc -g -c -Wall ../src/paging.c -o paging.o -fno-builtin -fno-stack-protector 
 gcc -g -c ../src/rand.c -o rand.o -fno-builtin -fno-stack-protector -Wall
 gcc -g -c ../src/process.c -o process.o -fno-builtin -fno-stack-protector -Wall
 gcc -g -c ../src/syscall.c -o syscall.o -fno-builtin -fno-stack-protector -Wall
