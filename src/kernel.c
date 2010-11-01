@@ -254,13 +254,19 @@ memcpy(char * out, char * src, int length){
 	}
 }
 
+
 void printA(int argc, char * argv[]){
-	int i = 0;
+//	int i = 0;
 //	printf("HOLA");
 
 //	breakProtection();
-//	char * vidmem = (char*) 0xb8000;
-//	vidmem[4] = 'A';
+
+	//*(int*)(0xFFF00000) = 20;
+
+	*(int*)(0xF00000) = 1;
+
+	char * vidmem = (char*) 0xb8000;
+	vidmem[2] = 'B';
 	while(true){
 	/*i++;
 		if(i % 100000 == 0)

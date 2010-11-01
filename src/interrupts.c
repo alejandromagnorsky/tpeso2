@@ -148,6 +148,9 @@ void int_03(){
 }
 
 void int_04(){
+	breakProtection();
+	char * vidmem = (char*) 0xb8000;
+	vidmem[24] = 'O';
 	printf("Overflow exception.\n");
 }
 
@@ -164,7 +167,10 @@ void int_07(){
 }
 
 void int_08(){
-	printf("Double fault\n");
+breakProtection();
+	char * vidmem = (char*) 0xb8000;
+	vidmem[22] = 'D';
+//	printf("Double fault\n");
 }
 
 void int_09(){
@@ -176,11 +182,18 @@ void int_0A(){
 }
 
 void int_0B(){
-	printf("Segment not present.\n");
+	breakProtection();
+	char * vidmem = (char*) 0xb8000;
+	vidmem[20] = 'N';
+	//printf("Segment not present.\n");
 }
 
 void int_0C(){
-	printf("Stack exception.\n");
+
+	breakProtection();
+	char * vidmem = (char*) 0xb8000;
+	vidmem[26] = 'S';
+//	printf("Stack exception.\n");
 }
 
 void int_0D(){
@@ -193,7 +206,7 @@ void int_0D(){
 void int_0E(){
 	breakProtection();
 	char * vidmem = (char*) 0xb8000;
-	vidmem[6] = 'P';
+	vidmem[10] = 'P';
 //	printf("Page fault.\n");
 }
 

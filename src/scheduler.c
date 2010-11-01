@@ -9,6 +9,10 @@ save_esp(int esp){
 
 int
 load_esp(Task * task){
+
+	char * vidmem = (char*) 0xb8000;
+	vidmem[6] = 'L';
+
 	return task->esp;
 }
 
@@ -20,6 +24,13 @@ get_temp_esp(){
 
 Task *
 getNextTask(){
+
+//	breakProtection();
+
+
+	char * vidmem = (char*) 0xb8000;
+	vidmem[4] = 'A';
+
 	last_task = mt_curr_task;
 	
 	if(last_task != &main_task && last_task->state == CURRENT )
@@ -38,6 +49,10 @@ getNextTask(){
 		mt_dequeue(mt_curr_task);
 		ready_q.iterations++;
 	}
+
+	vidmem[16] = 'H';
+
+
 	return mt_curr_task;
 }
 
