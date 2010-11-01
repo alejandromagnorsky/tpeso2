@@ -280,13 +280,6 @@ void int_20(int flag) {
 		Task * task;
 		if ( ticks_to_run )
 			ticks_to_run--;
-		while ( (task = mt_peekfirst_time()) && !task->ticks )
-		{
-			mt_getfirst_time();
-			__ready(task, false); 
-		}
-		if ( task )
-			task->ticks--;
 	}
 }
 

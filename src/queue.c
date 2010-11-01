@@ -129,108 +129,6 @@ mt_getlast(TaskQueue * queue)
 	return task;
 }
 
-/*
---------------------------------------------------------------------------------
-mt_enqueue_time - pone un proceso en la cola de tiempo.
-
-Los procesos estan ordenados por el tiempo de despertarse, en forma diferencial.
-El campo ticks de cada proceso se usa para almacenar los ticks de tiempo real 
-que transcurren entre el tiempo de despertarse de este proceso y del
-anterior en la cola. El primer proceso a despertar es el primero de la cola, y
-su campo de ticks en un momento determinado indica cuantos ticks le faltan para
-despertarse. La interrupcion de tiempo real decrementa el campo de ticks del
-primer proceso de esta cola. Si el campo llega a cero, despierta a este proceso
-y a todos los que le sigan que tambien tengan el campo de ticks en cero.
---------------------------------------------------------------------------------
-*/
-
-void 
-mt_enqueue_time(Task * task, int ticks)
-{
-	Task * current;
-
-	/* Buscar donde insertar */
-	for ( current = time_q.head ; current != NULL && ticks > current->ticks ; ticks -= current->ticks, current = current->time_next )
-		;
-	if ( current != NULL ) {		/* insertar antes de current */
-		if ( (task->time_prev = current->time_prev) != NULL )
-			current->time_prev->time_next = task;
-		else
-			time_q.head = task;
-		current->time_prev = task;
-		task->time_next = current;
-		current->ticks -= ticks;
-	}
-	else if ( (current = time_q.tail) != NULL )	{ /* insertar al final de la cola */
-		current->time_next = time_q.tail = task;
-		task->time_prev = current;
-		task->time_next = NULL;
-	}
-	else {						/* la cola esta vacia */
-		time_q.head = time_q.tail = task;
-		task->time_next = task->time_prev = NULL;
-	}
-	task->ticks = ticks;
-	task->in_time_q = true;
-}
-
-/*
---------------------------------------------------------------------------------
-mt_dequeue_time - quita un proceso de la cola de tiempo si esta en ella.
---------------------------------------------------------------------------------
-*/
-
-void 
-mt_dequeue_time(Task * task)
-{
-	if ( !task->in_time_q )
-		return;
-	if ( task->time_prev != NULL )
-		task->time_prev->time_next = task->time_next;
-	else
-		time_q.head = task->time_next;
-	if ( task->time_next )
-	{
-		task->time_next->ticks += task->ticks;
-		task->time_next->time_prev = task->time_prev;
-	}
-	else
-		time_q.tail = task->time_prev;
-	task->time_next = task->time_prev = NULL;
-	task->in_time_q = false;
-}
-
-/*
---------------------------------------------------------------------------------
-mt_peekfirst_time, mt_getfirst_time - acceso al primer proceso de la cola de tiempo
-
-Corresponde al primer proceso a despertar. Mt_peekfirst_time devuelve el
-proceso sin desencolarlo, mt_getfirst_time lo desencola.
---------------------------------------------------------------------------------
-*/
-
-Task *
-mt_peekfirst_time(void)
-{
-	return time_q.head;
-}
-
-Task *
-mt_getfirst_time(void)
-{
-	Task * task;
-
- 	if ( (task = time_q.head) == NULL )
-		return NULL;
-	if ( (time_q.head = task->time_next) != NULL )
-		time_q.head->time_prev = NULL;
-	else
-		time_q.tail = NULL;
-	task->time_prev = task->time_next = NULL;
-	task->in_time_q = false;
-	return task;
-}
-
 
 
 bool	
@@ -240,7 +138,6 @@ waitQueue(TaskQueue * queue){
 
 	DisableInts();
 	mt_dequeue(mt_curr_task);
-	mt_dequeue_time(mt_curr_task);
 	mt_curr_task->state = SUSPENDED;
 	mt_enqueue(mt_curr_task, queue);
 

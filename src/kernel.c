@@ -265,7 +265,6 @@ createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priorit
 	memcpy(task->name, name,strlen(name)+1);
 	task->count = 0;
 	task->pid = pid;
-	//task->send_queue.name = StrDup(name);
 
 	task->ss = _read_ds();
 	task->esp = _init_stack(func, task->stack+STACKSIZE-1, exit, INIFL, argc, argv);
@@ -358,30 +357,6 @@ yield(void)
 	ready(mt_curr_task);
 }
 
-
-/*
---------------------------------------------------------------------------------
-delay - pone al proceso actual a dormir durante una cantidad de milisegundos
---------------------------------------------------------------------------------
-*/
-
-void
-delay(int msecs)
-{
-	DisableInts();
-	if ( msecs )
-	{
-		block(mt_curr_task, DELAYING);
-		//if ( msecs != FOREVER )
-			mt_enqueue_time(mt_curr_task, msecs_to_ticks(msecs));
-	}
-	else
-		__ready(mt_curr_task, false);
-	//scheduler();
-	RestoreInts();
-}
-
-
 /*
 --------------------------------------------------------------------------------
 block - bloquea un proceso
@@ -392,7 +367,6 @@ void
 block(Task * task, TaskState state)
 {
 	mt_dequeue(task);
-	mt_dequeue_time(task);
 	mt_enqueue(task, &blocked_q);
 	task->state = state;
 }
@@ -431,7 +405,6 @@ __ready(Task * task, bool success)
 		return;
 
 	mt_dequeue(task);
-	mt_dequeue_time(task);
 	mt_enqueue(task, &ready_q);
 	task->success = success;
 	task->state = READY;
@@ -476,7 +449,7 @@ llama al scheduler.
 --------------------------------------------------------------------------------
 */
 
-void	setPriority(Task * task, unsigned priority){
+void setPriority(Task * task, unsigned priority){
 	TaskQueue * queue;
 
 	DisableInts();
@@ -487,38 +460,8 @@ void	setPriority(Task * task, unsigned priority){
 		mt_enqueue(task, queue);
 	}
 	if ( task == mt_curr_task || task->state == READY )
-		//scheduler();
+		_int_20_call(0);
 	RestoreInts();
-}
-
-
-/*
---------------------------------------------------------------------------------
-Atomic - deshabilita el modo preemptivo para el proceso actual (anidable)
---------------------------------------------------------------------------------
-*/
-
-void
-atomic(void)
-{
-	++mt_curr_task->atomic_level;
-}
-
-/*
---------------------------------------------------------------------------------
-Unatomic - habilita el modo preemptivo para el proceso actual (anidable)
---------------------------------------------------------------------------------
-*/
-
-void
-unatomic(void)
-{
-	if ( mt_curr_task->atomic_level && !--mt_curr_task->atomic_level )
-	{
-		DisableInts();
-		//scheduler();
-		RestoreInts();
-	}
 }
 
 

@@ -20,7 +20,6 @@ typedef struct{
 struct Task{
 	char name[MAX_NAMELENGTH];
 	unsigned 	priority;
-	unsigned	atomic_level;
 	TaskState state;	
 
 	int count;			// La cantidad de veces que tuvo procesador desde que esta despierto
@@ -36,12 +35,6 @@ struct Task{
 	TaskQueue *	queue; 	// Cola de procesos en la que se encuentra el proceso
 	Task *	prev;		// El task anterior a este en la cola de procesos especifica
 	Task *	next;		// El task siguiente a este en la cola de procesos especifica
-	
-	// Para cuando usa sleep
-	int	ticks;	// Ticks restantes para ser despertado
-	bool	in_time_q;		// Si es verdadero, el proceso esta en la cola del tiempo
-	Task *	time_prev;		// El task anterior a este en la cola del tiempo
-	Task *	time_next;		// El task siguiente a este en la cola del tiempo
 	
 	// Para los IPCs
 	bool	success;		// Indica si el mensaje fue recibido o enviado
@@ -64,12 +57,9 @@ void		deleteTask(Task * task);
 
 unsigned	getPriority(Task * task);
 void		setPriority(Task * task, unsigned priority);
-void		atomic(void);
-void		unatomic(void);
 void		suspend(Task * task);
 void		ready(Task * task);
 void		yield(void);
-void		delay(int msecs);
 void		exit(int argc, char * argv[]);
 
 bool		send(Task * to, char * msg, int size);
