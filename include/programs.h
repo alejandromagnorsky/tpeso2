@@ -1,9 +1,33 @@
+#include "defs.h"
 /***************************************************
   Programs.h
 ****************************************************/
 
 #ifndef _programs_
 #define _programs_
+
+
+#define MAX_PROGRAMS 32
+#define MAX_ARGUMENT_LENGTH 64
+#define MAX_ARGUMENTS 10
+#define MAX_HISTORY 20
+
+typedef struct{
+	char * descriptor;				// The name
+	int (*execute)(int argc, char * argv[]);	// The executable
+	char * man;				// The manual page 
+} __executable;
+
+extern __executable __executable_programs[MAX_PROGRAMS];
+extern int __QTY_PROGRAMS;
+
+
+
+int __register_program(char * descriptor, int (*execute)(int argc, char * argv[]));
+__executable * __getExecutableByDescriptor(char * descriptor);
+int __register_man_page(char * descriptor, char * man);
+
+
 
 int echo(int argc, char * argv[]);
 int clear(int argc, char * argv[]);

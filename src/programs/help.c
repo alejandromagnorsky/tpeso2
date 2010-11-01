@@ -1,4 +1,4 @@
-#include "../../include/shell.h"
+#include "../../include/programs.h"
 
 int help(int argc, char * argv[]){
 	printf("Possible commands:\n");

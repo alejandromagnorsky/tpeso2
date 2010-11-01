@@ -24,7 +24,6 @@ Task * 	mt_getfirst_time(void);
 
 void	deleteQueue(TaskQueue * queue);
 bool	waitQueue(TaskQueue *queue);
-bool	waitQueueTimed(TaskQueue * queue, int msecs);
 bool	signalQueue(TaskQueue * queue);
 void	flushQueue(TaskQueue * queue, bool success);
 

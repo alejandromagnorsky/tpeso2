@@ -75,12 +75,14 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs );
 
 __ProcessNode * __getParentProcessNode(__ProcessNode * p, __ProcessNode * c);
 
-
-
+int __getDeadTTY(int managerPID, int maxTTY);
 
 void init();	// Defined in shell.c
 
 
+int __getStdout();
+
+int __getStdin();
 
 void __setStdout(int fd);
 

@@ -49,23 +49,25 @@ extern char __SYSTEM_SYMBOL[__MAX_SS];
 
 void __shift_terminal_cursor(int direction, int qty);
 
-void __write_char(char c);
+void __write_char(char c, int flush);
 
-void __scroll_terminal();
+void __scroll_terminal(int flush);
 
 void __changeSystemSymbol(char * str);
 
-void __printSystemSymbol();
+void __printSystemSymbol(int index);
 
 void __INIT_TTY();
 
 void __clear_terminal();
 
-int __write_terminal( const char* buffer, int count);
+int __write_terminal( const char* buffer, int count, int flush);
 
 void __flush_terminal(int append);
 
 int __switch_terminal(int index);
+
+int __switch_terminalnf(int index);
 
 void __switch_next_terminal();
 

@@ -1,4 +1,5 @@
-#include "../../include/shell.h"
+#include "../../include/syscall.h"
+#include "../../include/programs.h"
 
 int man(int argc, char * argv[]){
 	if(argc >= 1){

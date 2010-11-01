@@ -153,6 +153,15 @@ void __setStdin(int fd){
 	__getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD = fd;
 }
 
+
+int __getStdout(){
+	return __getProcessNodeByPID(mt_curr_task->pid)->data->stdoutFD;
+}
+
+int __getStdin(){
+	return __getProcessNodeByPID(mt_curr_task->pid)->data->stdinFD;
+}
+
 void __waitProcess( __ProcessNode * parent, int pid){
 	__tryWaitProcess(parent,pid);	
 
@@ -303,8 +312,6 @@ void __setPriority(int p){
 	setPriority(mt_curr_task,p);
 }
 
-//	printf("PID\tTTY\tName\n");
-
 void __ps( int pid ){
 
 	__ProcessNode * p = __getProcessNodeByPID(pid);
@@ -354,6 +361,23 @@ void __printProcessTreeTabs( __ProcessNode * p, int tabs ){
 	}
 }
 
+
+int __getDeadTTY(int managerPID, int maxTTY){
+
+	__ProcessNode * manager = __getProcessNodeByPID(managerPID);
+
+	int i,j;
+	for(j=0;j<maxTTY;j++){
+		int exists = 0;
+		for(i=0;i<__MAX_CHILDS;i++)
+			if(manager->childs[i] != NULL)
+				if(manager->childs[i]->data->stdinFD == j)
+					exists = 1;
+		if(!exists)
+			return j;
+	}
+	return -1;
+}
 
 
 int __forkexec(TaskFunc f, int argc, char * argv[]){
