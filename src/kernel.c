@@ -3,6 +3,7 @@
 #include "../include/keyboard.h"
 #include "../include/interrupts.h"
 #include "../include/shell.h"
+#include "../include/paging.h"
 #include "../include/multiboot.h"
 #include "../include/process.h"
 #include "../include/console.h"
@@ -40,10 +41,12 @@ size_t __read(int fd, void* buffer, size_t count){
 }
 
 size_t __write(int fd, const void* buffer, size_t count){
-
 	// If it is disabled
 	if(procStdout == -1)
 		return 0;
+
+//	while( fd != stdout || procStdout != __TTY_INDEX)
+//		yield();
 
 
 	int tmp = __TTY_INDEX;
@@ -57,6 +60,33 @@ size_t __write(int fd, const void* buffer, size_t count){
 
 	return count;
 }
+
+
+
+
+
+int protectPage(int a, char * v[]){
+
+	int i;
+    unsigned int * page_table = (unsigned int *)(KERNEL_LIMIT);
+    for(i=49; i < 52; i++)
+            page_table[i] = page_table[i] & 0xFFFFFFFE;
+
+//	unsigned * table = (unsigned * )KERNEL_LIMIT;
+//	table[50] &= 0xFFFFFFFE;
+}
+
+
+int touchPage(int a, char * v[]){
+	int dir = 666; //50/1024;
+	int table = 50; // 50%1024
+
+	unsigned * address = (unsigned *)((dir << 22) + (table << 12));
+
+	*address = 28746;
+}
+
+
 
 void initializeShellCommands(){
 
@@ -85,6 +115,8 @@ void initializeShellCommands(){
 	__register_program("exit", (int (*)(int,char**))exit);
 	__register_program("waitDead", (int (*)(int,char**))do_nothing);
 	__register_program("getJoke", getJoke);
+	__register_program("touchPage", touchPage);
+	__register_program("protectPage", protectPage);
 
 	__register_man_page("echo","Prints the string received.");
 	__register_man_page("clear", "Clears the screen.");
@@ -114,6 +146,8 @@ void initializeShellCommands(){
 	__register_man_page("ps","Snapshot of current processes. -e for all processes");
 	__register_man_page("waitDead","Demonstration only: makes shell wait first dead children");
 	__register_man_page("getJoke","Get a joke from the jokes server. Use a number between 0 and 9");
+	__register_man_page("touchPage","Touch a page");
+	__register_man_page("protectPage","Protect a page");
 	
 }
 
@@ -164,6 +198,11 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 
 	// Inicializar procesos e init (aca esta el fork inicial)
 	__initializeProcessSubSystem();
+
+
+    __Process_pages * pages;
+    pages = allocProcess(0);
+    main_task.stack = pages->s_page;
 
 	/* Inicializar proceso principal */
 	memcpy(main_task.name,"Main Task", 10);
@@ -265,6 +304,9 @@ createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priorit
 	task->count = 0;
 	task->pid = pid;
 
+
+	__Process_pages * p = allocProcess(pid+1);
+	task->stack = p->s_page;
 	task->ss = _read_ds();
 	task->esp = _init_stack(func, task->stack+STACKSIZE-1, exit, INIFL, argc, argv);
 

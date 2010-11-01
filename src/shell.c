@@ -108,7 +108,6 @@ int __getShellArguments(char * ans){
 }
 
 void init(){
-
 	setStdout(0);
 	setStdin(0);
 	char * argv[] = {"terminal-manager" , NULL };
