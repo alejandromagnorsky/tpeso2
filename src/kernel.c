@@ -167,7 +167,6 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	pages = allocProcess(50);
 	main_task.stack = pages->s_page;
 	//printf("PAGES PID: %d\n", pages->pid);
-	//printf("GLOBAL VARIABLE AUX WITH STACK PAGE: %d\n", aux);
 	//printf("ALLOC PROCESS 50\n\tSTACK PAGE: %d\n\tDATA_PAGE: %d\n", pages->s_page, pages->d_page);
 	
 	main_task.esp = _init_stack(do_nothing, main_task.stack+STACKSIZE-1, exit, INIFL, 0, NULL);
@@ -199,7 +198,7 @@ void do_nothing(int argc, char * argv[]){
  * --- MEMORY MAP ------------------------------------------------------------------------------|
  * |	START	|	END		|	SIZE	|	DESCRIPTION											|
  * --- BEGINNING OF LOWER MEMORY ---------------------------------------------------------------|
- * |	0K		|	636K	|	636K	|	type 1												| ==>	Do NOT use first 1280 bytes although are type 1. Remember
+ * |	0K		|	636K	|	636K	|	type 1												| ==> Do NOT use first 1280 bytes although are type 1. Remember
  * |	636K	|	640K	|	4K		|	Extended BDA, type 2								| IVT is stored in the first 1K of memory, among others.
  * |	640K	|	928K	|	288K	|	Reserved memory area (unlisted, type 2)				| ==> Reserved memory area is for:
  * |	928K	|	1024K	|	96K		|	Reserved memory area (type 2)						| 	- System BIOS ROM
@@ -212,7 +211,7 @@ void do_nothing(int argc, char * argv[]){
  * Makes a total of 32 MiB, which is effectively what the bochsrc is showing in one of the first lines!!
  *
  * REGION TYPES:
- * 	- Type O: Negative.
+ * 	- Type O Negative.
  * 	- Type 1: Usable (normal) RAM.
  * 	- Type 2: Reserved - unusable.
  * 	- Type 3: ACPI reclaimable memory.
