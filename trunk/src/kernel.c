@@ -256,7 +256,7 @@ memcpy(char * out, char * src, int length){
 
 void printA(int argc, char * argv[]){
 	int i = 0;
-
+//	printf("HOLA");
 
 //	breakProtection();
 //	char * vidmem = (char*) 0xb8000;
@@ -285,10 +285,7 @@ createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priorit
 	//Task * task;
 	Task * task = mt_getAvailableTask( __taskArray, __MAX_TASKS);
 	
-	printf("\t\tALLOCPROCESS EN CREATETASK:\n");
 	__Process_pages * pages = allocProcess(pid);
-	printf("D: %d\n", pages->d_page);
-	printf("S: %d\n", pages->s_page);
 	task->stack = pages->s_page;
 	
 	task->priority = priority;
