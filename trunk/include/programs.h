@@ -42,6 +42,7 @@ int tty(int argc, char * argv[]);
 int bingo(int argc, char * argv[]);
 int reboot(int argc, char * argv[]);
 int history(int argc, char * argv[]);
+int getJoke(int argc, char * argv[]);
 
 
 int daemon1(int argc, char * argv[]);

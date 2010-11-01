@@ -5,6 +5,11 @@
 #include "../include/sem.h"
 #include "../include/kc.h"
 
+Semaphore * client_readSem;
+Semaphore * server_readSem;
+Semaphore * client_writeSem;
+Semaphore * server_writeSem;
+
 #define SERVER 1
 #define CLIENT 0
 

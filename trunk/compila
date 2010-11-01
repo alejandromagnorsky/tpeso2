@@ -24,6 +24,7 @@ gcc -g -c ../src/programs/gcc.c -o gcc.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/mkexc.c -o mkexc.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/clear.c -o clear.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/bingo.c -o bingo.o -fno-builtin -fno-stack-protector
+gcc -g -c ../src/programs/jokes.c -o jokes.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/reboot.c -o reboot.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/history.c -o historyComm.o -fno-builtin -fno-stack-protector
 gcc -g -c ../src/programs/top.c -o top.o -fno-builtin -fno-stack-protector
@@ -41,4 +42,4 @@ gcc -g -c ../src/syscall.c -o syscall.o -fno-builtin -fno-stack-protector -Wall
 gcc -g -c ../src/history.c -o history.o -fno-builtin -fno-stack-protector -Wall
 gcc -g -c ../src/programs.c -o programs.o -fno-builtin -fno-stack-protector -Wall
 
-ld -T ../src/link.ld kstart.o -o kernel.bin kernel.o queue.o scheduler.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o historyComm.o history.o allocator.o paging.o rand.o top.o pstree.o process.o kill.o daemon1.o ps.o syscall.o programs.o sem.o ipc.o
+ld -T ../src/link.ld kstart.o -o kernel.bin kernel.o queue.o scheduler.o video.o keyboard.o libc.o libasm.o console.o interrupts.o shell.o cpuid.o time.o tty.o clear.o man.o echo.o arnold.o help.o gcc.o mkexc.o bingo.o reboot.o historyComm.o history.o allocator.o paging.o rand.o top.o pstree.o process.o kill.o daemon1.o ps.o syscall.o programs.o sem.o ipc.o jokes.o
