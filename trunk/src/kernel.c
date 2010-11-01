@@ -7,8 +7,7 @@
 #include "../include/process.h"
 #include "../include/console.h"
 #include "../include/programs.h"
-#include "../include/paging.h"
-
+#include "../include/history.h"
 
 void __printMemoryMap(multiboot_info_t * mbd);
 void printA(int argc, char * argv[]);
@@ -43,13 +42,22 @@ size_t __read(int fd, void* buffer, size_t count){
 size_t __write(int fd, const void* buffer, size_t count){
 
 	// If it is disabled
-//	if(procStdout == -1)
-//		return 0;
+	if(procStdout == -1)
+		return 0;
 
 //	while( fd != stdout || procStdout != __TTY_INDEX)
 //		yield();
 
-	__write_terminal(buffer,count);
+
+	int tmp = __TTY_INDEX;
+	if(procStdout == __TTY_INDEX)
+		__write_terminal(buffer,count, 1);	
+	else {
+		__switch_terminalnf(procStdout);
+		__write_terminal(buffer,count,0);
+	}
+	__switch_terminalnf(tmp);
+
 	return count;
 }
 
@@ -142,9 +150,11 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	//*ptr = 5;
 	//printf("%d\n", *ptr);
 	paging();
-	//printf("%d\n", allocPage());
+	//printf("%d\n", *ptr);
 
 	initializeShellCommands();
+	__init_history();
+
 
 	_srand(1295872354);
 
@@ -154,7 +164,7 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	mt_initTaskQueue( &blocked_q, "Blocked Queue");
 
 	// Inicializar procesos e init (aca esta el fork inicial)
-	//__initializeProcessSubSystem();
+	__initializeProcessSubSystem();
 
 	/* Inicializar proceso principal */
 	memcpy(main_task.name,"Main Task", 10);
@@ -162,23 +172,14 @@ int kmain(multiboot_info_t * mbd, unsigned int magic)
 	main_task.priority = 0;
 	main_task.send_queue.name = main_task.name;
 	main_task.ss = _read_ds();
-	
-	__Process_pages * pages;
-	pages = allocProcess(50);
-	main_task.stack = pages->s_page;
-	//printf("PAGES PID: %d\n", pages->pid);
-	//printf("ALLOC PROCESS 50\n\tSTACK PAGE: %d\n\tDATA_PAGE: %d\n", pages->s_page, pages->d_page);
-	
 	main_task.esp = _init_stack(do_nothing, main_task.stack+STACKSIZE-1, exit, INIFL, 0, NULL);
 
-	Task * task1 = createTask(printA, 0, NULL, "PRINT A" , 4, 15);
-	mt_enqueue(task1, &ready_q);
 
 	ticks_to_run = QUANTUM;
 	mt_curr_task = &main_task;
 
 	RestoreInts();
-	
+
 	do_nothing(0, NULL);
 
 	return 0;
@@ -198,7 +199,7 @@ void do_nothing(int argc, char * argv[]){
  * --- MEMORY MAP ------------------------------------------------------------------------------|
  * |	START	|	END		|	SIZE	|	DESCRIPTION											|
  * --- BEGINNING OF LOWER MEMORY ---------------------------------------------------------------|
- * |	0K		|	636K	|	636K	|	type 1												| ==> Do NOT use first 1280 bytes although are type 1. Remember
+ * |	0K		|	636K	|	636K	|	type 1												| ==>	Do NOT use first 1280 bytes although are type 1. Remember
  * |	636K	|	640K	|	4K		|	Extended BDA, type 2								| IVT is stored in the first 1K of memory, among others.
  * |	640K	|	928K	|	288K	|	Reserved memory area (unlisted, type 2)				| ==> Reserved memory area is for:
  * |	928K	|	1024K	|	96K		|	Reserved memory area (type 2)						| 	- System BIOS ROM
@@ -211,7 +212,7 @@ void do_nothing(int argc, char * argv[]){
  * Makes a total of 32 MiB, which is effectively what the bochsrc is showing in one of the first lines!!
  *
  * REGION TYPES:
- * 	- Type O Negative.
+ * 	- Type O: Negative.
  * 	- Type 1: Usable (normal) RAM.
  * 	- Type 2: Reserved - unusable.
  * 	- Type 3: ACPI reclaimable memory.
@@ -255,47 +256,13 @@ memcpy(char * out, char * src, int length){
 }
 
 
-void printA(int argc, char * argv[]){
-//	int i = 0;
-//	printf("HOLA");
-
-//	breakProtection();
-
-	//*(int*)(0xFFF00000) = 20;
-
-	*(int*)(0xF00000) = 1;
-
-	char * vidmem = (char*) 0xb8000;
-	vidmem[2] = 'B';
-	while(true){
-	/*i++;
-		if(i % 100000 == 0)
-			printf("%d-", i);*/
-	}
-}
-
-void printB(int argc, char * argv[]){
-	int i = 0;
-//	char * vidmem = (char*) 0xb8000;
-//	vidmem[2]= 'B';
-	while(true){
-		/*i++;
-		if(i % 500000 == 0)
-			printf("%d\n\n\n\n", i);*/
-	}
-}
-
 Task *
 createTask(TaskFunc func, int argc, char * argv[], char * name, unsigned priority, int pid)
 {
 	//Task * task;
 	Task * task = mt_getAvailableTask( __taskArray, __MAX_TASKS);
-	
-	__Process_pages * pages = allocProcess(pid);
-	task->stack = pages->s_page;
-	
 	task->priority = priority;
-	memcpy(task->name, name, strlen(name)+1);
+	memcpy(task->name, name,strlen(name)+1);
 	task->count = 0;
 	task->pid = pid;
 	//task->send_queue.name = StrDup(name);

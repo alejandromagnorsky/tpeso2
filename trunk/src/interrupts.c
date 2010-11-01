@@ -119,6 +119,9 @@ void setupIDT(){
 //Rutina de atención de escritura y lectura
 	setup_IDT_entry (&idt[0x80], 0x08, (dword)&_int_80_hand, ACS_INT, 0);
 
+//Servicios de la terminal
+	setup_IDT_entry (&idt[0x70], 0x08, (dword)&_int_70_hand, ACS_INT, 0);
+
 
 /* Carga de IDTR    */
 
@@ -148,9 +151,6 @@ void int_03(){
 }
 
 void int_04(){
-	breakProtection();
-	char * vidmem = (char*) 0xb8000;
-	vidmem[24] = 'O';
 	printf("Overflow exception.\n");
 }
 
@@ -167,10 +167,7 @@ void int_07(){
 }
 
 void int_08(){
-breakProtection();
-	char * vidmem = (char*) 0xb8000;
-	vidmem[22] = 'D';
-//	printf("Double fault\n");
+	printf("Double fault\n");
 }
 
 void int_09(){
@@ -182,32 +179,19 @@ void int_0A(){
 }
 
 void int_0B(){
-	breakProtection();
-	char * vidmem = (char*) 0xb8000;
-	vidmem[20] = 'N';
-	//printf("Segment not present.\n");
+	printf("Segment not present.\n");
 }
 
 void int_0C(){
-
-	breakProtection();
-	char * vidmem = (char*) 0xb8000;
-	vidmem[26] = 'S';
-//	printf("Stack exception.\n");
+	printf("Stack exception.\n");
 }
 
 void int_0D(){
-	breakProtection();
-	char * vidmem = (char*) 0xb8000;
-	vidmem[8] = 'G';
-	//printf("General protection\n");
+	printf("General protection\n");
 }
 
 void int_0E(){
-	breakProtection();
-	char * vidmem = (char*) 0xb8000;
-	vidmem[10] = 'P';
-//	printf("Page fault.\n");
+	printf("Page fault.\n");
 }
 
 void int_0F(){

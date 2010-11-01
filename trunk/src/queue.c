@@ -232,6 +232,45 @@ mt_getfirst_time(void)
 }
 
 
+
+bool	
+waitQueue(TaskQueue * queue){
+
+	bool success;
+
+	DisableInts();
+	mt_dequeue(mt_curr_task);
+	mt_dequeue_time(mt_curr_task);
+	mt_curr_task->state = SUSPENDED;
+	mt_enqueue(mt_curr_task, queue);
+
+	_int_20_call(0);
+	success = mt_curr_task->success;
+	RestoreInts();
+
+	return success;
+}
+
+
+bool		
+signalQueue(TaskQueue * queue)
+{
+
+	Task * task;
+
+	DisableInts();
+
+	if ( task = mt_getlast(queue) ){
+		__ready(task, true);
+		_int_20_call(0);
+	}
+
+	RestoreInts();
+
+	return task != NULL;
+}
+
+
 /*
 --------------------------------------------------------------------------------
 DeleteQueue - destruye una cola de procesos
@@ -264,54 +303,6 @@ waitQueue(TaskQueue * queue)
 	return waitQueueTimed(queue, FOREVER);
 }
 
-bool			
-waitQueueTimed(TaskQueue * queue, int msecs)
-{
-	bool success;
-
-	if ( !msecs )
-		return false;
-
-	DisableInts();
-	block(mt_curr_task, WAITING);
-	mt_enqueue(mt_curr_task, queue);
-	if ( msecs != FOREVER )
-		mt_enqueue_time(mt_curr_task, msecs_to_ticks(msecs));
-	scheduler();
-	success = mt_curr_task->success;
-	RestoreInts();
-
-	return success;
-}
-*/
-/*
---------------------------------------------------------------------------------
-SignalQueue, FlushQueue - funciones para despertar procesos en una cola
-
-SignalQueue despierta el ultimo proceso de la cola (el de mayor prioridad o
-el que llego primero entre dos de la misma prioridad), el valor de retorno 
-es true si desperto a un proceso. Este proceso completa su WaitQueue() 
-exitosamente.
-FlushQueue despierta a todos los procesos de la cola, que completan su
-WaitQueue() con el resultado que se pasa como argumento.
---------------------------------------------------------------------------------
-*/
-/*
-bool		
-signalQueue(TaskQueue * queue)
-{
-	Task * task;
-
-	DisableInts();
-	if ( task = mt_getlast(queue) )
-	{
-		__ready(task, true);
-		scheduler();
-	}
-	RestoreInts();
-
-	return task != NULL;
-}
 */
 void			
 flushQueue(TaskQueue * queue, bool success)

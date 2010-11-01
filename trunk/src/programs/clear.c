@@ -1,4 +1,6 @@
+#include "../../include/syscall.h"
+
 int clear(int argc, char * argv[]){
-	__clear_terminal();
+	clearTerminal();
 	return 0;
 }

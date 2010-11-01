@@ -49,15 +49,15 @@ GLOBAL  _int_1F_hand
 GLOBAL  _int_20_hand
 GLOBAL  _int_21_hand
 GLOBAL  _int_80_hand
+GLOBAL  _int_70_hand
 GLOBAL  _int_20_call
+GLOBAL  _int_70_call
 GLOBAL  _int_80_call
 GLOBAL	_inport
 GLOBAL  _outport
 GLOBAL  _mascaraPIC1,_mascaraPIC2
 GLOBAL  _debug
 
-EXTERN	breakProtection
-EXTERN	protect
 EXTERN	int_00
 EXTERN	int_01
 EXTERN	int_02
@@ -97,6 +97,7 @@ EXTERN 	get_temp_esp
 EXTERN 	load_esp
 EXTERN 	save_esp
 EXTERN int80Handler
+EXTERN int70Handler
 EXTERN getAscii
 EXTERN __keyboard_buffer
 EXTERN __KBUFFER_PTR_
@@ -535,40 +536,27 @@ _int_20_call:
 _int_20_hand:				; Handler de INT 20h (Timer tick)
 	cli
 	pushad
-
-	pushad
-	call breakProtection
-	popad
 	
+	mov 	eax, esp		
+	push 	eax			
+	call	save_esp		; Guarda la posicion actual del esp en la tarea actual
+	pop 	eax
 
-
-		mov 	eax, esp		
-		push 	eax			
-		call	save_esp		; Guarda la posicion actual del esp en la tarea actual
-		pop 	eax
-
-		call	get_temp_esp	
-		mov		esp, eax		; Cambia al stack del main task para realizar ahi las operaciones del scheduler
+	call	get_temp_esp	
+	mov		esp, eax		; Cambia al stack del main task para realizar ahi las operaciones del scheduler
 	
-		push    ecx				; Guarda el registro que le pasa como parametro la _int_20_call
-		call    int_20    		
-		pop		ecx
+	push    ecx				; Guarda el registro que le pasa como parametro la _int_20_call
+	call    int_20    		
+	pop		ecx
 
-		call 	getNextTask		; Obtiene la siguiente tarea segun el algoritmo de scheduler
-		push 	eax
-		call 	load_esp		; Devuelve el esp de la nueva tarea
-		pop		ebx
-	
-		mov		esp, eax		; Cambia el stack
+	call 	getNextTask		; Obtiene la siguiente tarea segun el algoritmo de scheduler
+	push 	eax
+	call 	load_esp		; Devuelve el esp de la nueva tarea
+	pop		ebx
+	mov		esp, eax		; Cambia el stack
 
-		mov	al, 20h				; Envio de EOI generico al PIC
-		out	20h, al
-
-
-
-	pushad
-	call	protect
-	popad
+	mov	al, 20h				; Envio de EOI generico al PIC
+	out	20h, al
 
 	popad                    		
 
@@ -598,6 +586,41 @@ _int_21_hand:				; Handler de INT 21h (Teclado)
 
 
 
+
+_int_70_call:
+	push ebp
+	mov ebp, esp
+	
+	mov ebx, [ebp+12]
+	mov ecx, [ebp+16]
+	mov edx, [ebp+20]
+	mov eax, [ebp+8]
+
+	int 70h
+
+	leave
+	ret
+
+_int_70_hand:
+	cli
+	push ebp
+	mov ebp, esp
+
+	push dword edx	; Pushea los parámetros de read y write
+	push dword ecx
+	push dword ebx
+	push dword eax
+
+	call int70Handler
+
+	leave
+	sti
+	iret
+
+
+
+
+
 _int_80_call:
 	push ebp
 	mov ebp, esp
@@ -622,15 +645,7 @@ _int_80_hand:
 	push dword ebx
 	push dword eax
 
-	pushad
-	;call breakProtection	
-	popad
-	
 	call int80Handler
-	
-	pushad
-	;call protect
-	popad
 
 	leave
 	sti
